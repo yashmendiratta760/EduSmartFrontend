@@ -1,0 +1,144 @@
+package com.yash.edusmart.screens.component
+
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.yash.edusmart.viewmodel.ChatViewModel
+import org.json.JSONObject
+
+@Composable
+fun Messagebox(modifier: Modifier=Modifier,
+               message:String?,
+               isSent:Boolean,
+               id:Int,
+               time:String,
+               viewModel: ChatViewModel,
+               imageUri:String? = null)
+{
+    var isImageOpen by remember { mutableStateOf(false)}
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalArrangement = if (isSent) Arrangement.End else Arrangement.Start
+    ) {
+        Box(
+            modifier = Modifier
+                .wrapContentWidth()
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+//                            viewModel.deleteMessageById(id)
+                        },
+                        onTap = {
+                            if (imageUri != null) {
+                                isImageOpen = true
+                            }
+                        }
+                    )
+                }
+                .widthIn(max = (LocalConfiguration.current.screenWidthDp / (1.6f)).dp)
+                .background(
+                    color = if (isSent) Color(0xFFD1FCD3) else Color(0xFFFFFFFF),
+                    shape = RoundedCornerShape(
+                        topStart = 16.dp,
+                        topEnd = 16.dp,
+                        bottomStart = if (isSent) 16.dp else 0.dp,
+                        bottomEnd = if (isSent) 0.dp else 16.dp
+
+                    )
+
+
+                )
+                .padding(horizontal = 10.dp)
+        ) {
+            Text(
+                text = time,
+                fontSize = 10.sp,
+                color = Color.Gray,
+                modifier = Modifier
+                    .padding(start = 50.dp,
+                        top = 25.dp)
+                    .align(Alignment.BottomEnd)
+            )
+
+            if (message != null) {
+                Text(
+                    text = message,
+                    fontSize = 16.sp,
+                    color = if (isSent) Color.Black else Color.DarkGray,
+
+                    modifier = Modifier.padding(start = 1.dp,
+                        end = 16.dp,
+                        top = 10.dp,
+                        bottom = 8.dp)
+                )
+            }
+            else if(imageUri!=null)
+            {
+                Log.d("uri",imageUri)
+                val jsonObject = JSONObject(imageUri)
+                val fixedImageUri = jsonObject.getString("url")
+//                AsyncImage(
+//
+//                    model =  fixedImageUri,
+//                    contentDescription = "Sent Image",
+//                    modifier = modifier
+//                        .size(200.dp)
+//                        .clip(RoundedCornerShape(8.dp))
+//                        .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
+//                    placeholder = painterResource(R.drawable.cupcake),
+//                    error = painterResource(R.drawable.ic_launcher_background)
+//                )
+            }
+        }
+    }
+    if (isImageOpen) {
+        Dialog(onDismissRequest = { isImageOpen = false }) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+                    .clickable { isImageOpen = false }
+            ) {
+                val jsonObject = JSONObject(imageUri)
+                val fixedImageUri = jsonObject.getString("url")
+//                AsyncImage(
+//                    model = fixedImageUri,
+//                    contentDescription = "Full Image",
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .padding(16.dp)
+//                )
+            }
+        }
+    }
+}

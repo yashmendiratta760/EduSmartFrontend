@@ -1,0 +1,121 @@
+package com.yash.edusmart.repository
+
+import com.yash.edusmart.api.AssignmentStudent
+import com.yash.edusmart.api.AttendanceDTO
+import com.yash.edusmart.api.HolidayEntity
+import com.yash.edusmart.api.MainAppApi
+import com.yash.edusmart.api.StudentData
+import com.yash.edusmart.api.StudentsListDTO
+import com.yash.edusmart.data.AssignmentGetDTO
+import com.yash.edusmart.data.AttendanceUploadDTO
+import com.yash.edusmart.data.TimeTableEntry
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import retrofit2.Response
+import retrofit2.http.Body
+import retrofit2.http.Query
+import javax.inject.Inject
+import javax.inject.Singleton
+
+interface MainAppRepo
+{
+    suspend fun getTimeTableByBranch(branch: String,semester: String): Response<List<TimeTableEntry>>
+    suspend fun getAttendanceByEmail(email: String): Response<List<AttendanceDTO>>
+
+    suspend fun uploadAttendance(attendanceUploadDTO: AttendanceUploadDTO): Response<String>
+
+    suspend fun getStudentsByBranchAndSemester(studentsListDTO : StudentsListDTO): Response<List<StudentData>>
+
+    suspend fun getStudentsByBranchAndSemesterTeacher(studentsListDTO : StudentsListDTO): Response<List<StudentData>>
+
+    suspend fun getAllSubjects(branch: String,semester: String): Response<List<String>>
+
+    suspend fun getAllBranch(): Response<List<String>>
+
+    suspend fun getTimeTableByBranchAndSemesterTeacher(branch: String,semester: String): Response<List<TimeTableEntry>>
+
+    suspend fun getAllAssignTeacher(): Response<List<AssignmentGetDTO>>
+
+    suspend fun markAssignment(
+        idAss: Long,
+        enroll: String
+    ): Response<String>
+
+    suspend fun getAllAssign(): Response<List<AssignmentStudent>>
+
+    suspend fun getHolidays(): Response<List<HolidayEntity>>
+}
+class MainAppRepoImpl @Inject constructor(private val mainAppApi: MainAppApi): MainAppRepo
+{
+
+    override suspend fun getTimeTableByBranch(
+        branch: String,
+        semester: String
+    ): Response<List<TimeTableEntry>> {
+        return mainAppApi.getTimeTableByBranch(branch,semester)
+    }
+
+    override suspend fun getAttendanceByEmail(email: String): Response<List<AttendanceDTO>> {
+        return mainAppApi.getAttendance(email)
+    }
+
+    override suspend fun uploadAttendance(attendanceUploadDTO: AttendanceUploadDTO): Response<String> {
+        return mainAppApi.uploadAttendance(attendanceUploadDTO)
+    }
+
+    override suspend fun getStudentsByBranchAndSemester(studentsListDTO: StudentsListDTO): Response<List<StudentData>> {
+        return mainAppApi.getStudentsByBranchAndSemester(studentsListDTO)
+    }
+
+    override suspend fun getStudentsByBranchAndSemesterTeacher(studentsListDTO: StudentsListDTO): Response<List<StudentData>> {
+        return mainAppApi.getStudentsByBranchAndSemesterTeacher(studentsListDTO)
+    }
+
+    override suspend fun getAllSubjects(
+        branch: String,
+        semester: String
+    ): Response<List<String>> {
+        return mainAppApi.getSubjects(branch,semester)
+
+    }
+
+    override suspend fun getAllBranch(): Response<List<String>> {
+        return mainAppApi.getAllBranch()
+    }
+
+    override suspend fun getTimeTableByBranchAndSemesterTeacher(
+        branch: String,
+        semester: String
+    ): Response<List<TimeTableEntry>> {
+        return mainAppApi.getTimeTableByBranchAndSemesterTeacher(branch,semester)
+    }
+
+    override suspend fun getAllAssignTeacher(): Response<List<AssignmentGetDTO>> {
+        return mainAppApi.getAllAssignTeacher()
+    }
+
+    override suspend fun markAssignment(
+        idAss: Long,
+        enroll: String
+    ): Response<String> {
+        return mainAppApi.markAssignment(idAss,enroll)
+    }
+
+    override suspend fun getAllAssign(): Response<List<AssignmentStudent>> {
+        return mainAppApi.getAllAssign()
+    }
+
+    override suspend fun getHolidays(): Response<List<HolidayEntity>> {
+        return mainAppApi.getHolidays()
+    }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class MainAppRepoModule{
+    @Binds
+    @Singleton
+    abstract fun joinImpl(impl: MainAppRepoImpl): MainAppRepo
+}
