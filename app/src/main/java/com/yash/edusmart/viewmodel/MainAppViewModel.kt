@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -92,15 +93,27 @@ class MainAppViewModel @Inject constructor(
         }
     }
 
-    fun addAssignment(data: Assignments) {
+    fun syncAssignments(latest: List<Assignments>) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                assignmentLocalRepo.insert(assignments = data)
+                val latestIds = latest.map { it.id }
+
+                // 1️⃣ Delete extra assignments
+                assignmentLocalRepo.deleteExtras(latestIds)
+
+                // 2️⃣ Insert / update current ones
+                latest.forEach { assignment ->
+                    assignmentLocalRepo.insert(assignment)
+                }
+
             } catch (e: Exception) {
-                showToast(e.message ?: "Something Went Wrong!")
+                withContext(Dispatchers.Main) {
+                    showToast(e.message ?: "Something went wrong!")
+                }
             }
         }
     }
+
 
     fun markAssignment(id: Long, enroll: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -118,23 +131,23 @@ class MainAppViewModel @Inject constructor(
             safeApi(
                 call = { mainAppRepo.getAllAssign() },
                 onSuccess = { list ->
-                    (list ?: emptyList()).forEach {
-                        addAssignment(
-                            Assignments(
-                                it.id,
-                                it.branch,
-                                it.sem,
-                                emptyList(),
-                                it.assignment,
-                                it.deadline,
-                                isCompleted = false
-                            )
+                    val latest = (list ?: emptyList()).map {
+                        Assignments(
+                            id = it.id,
+                            branch = it.branch,
+                            sem = it.sem,
+                            enrollCom = emptyList(),
+                            task = it.assignment,
+                            deadline = it.deadline,
+                            isCompleted = false
                         )
                     }
+                    syncAssignments(latest)
                 }
             )
         }
     }
+
 
     suspend fun insertOrSync(newData: AssignmentGetDTO) {
         try {
@@ -418,6 +431,38 @@ class MainAppViewModel @Inject constructor(
                     showToast(err)
                 }
             )
+        }
+    }
+
+    fun getTimeTableTeacher(email: String){
+        viewModelScope.launch(Dispatchers.IO){
+            safeApi(call = {mainAppRepo.getTeacherTimeTable(email)},
+                onSuccess = {time->
+                    _uiState.update { it->
+                        it.copy(timeTableTeacher = time?:emptyList())
+                    }
+                    Log.d("TIM",time.toString())
+                },
+                onError = { err ->
+                    showToast(err)
+                }
+            )
+
+        }
+    }
+
+    fun deleteById(id: Long){
+        viewModelScope.launch(Dispatchers.IO) {
+            safeApi(call = {
+                mainAppRepo.deleteAssignment(id)
+            },
+                onSuccess = { str->
+                    getAssignments()
+                    showToast(str?:"Uploaded")
+                },
+                onError = {
+                    showToast("Some error occurred")
+                })
         }
     }
 }

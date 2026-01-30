@@ -9,6 +9,7 @@ import com.yash.edusmart.api.StudentsListDTO
 import com.yash.edusmart.data.AssignmentGetDTO
 import com.yash.edusmart.data.AttendanceUploadDTO
 import com.yash.edusmart.data.TimeTableEntry
+import com.yash.edusmart.db.TimeTableEntries
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -46,7 +47,12 @@ interface MainAppRepo
     suspend fun getAllAssign(): Response<List<AssignmentStudent>>
 
     suspend fun getHolidays(): Response<List<HolidayEntity>>
+
+    suspend fun getTeacherTimeTable(email : String): Response<List<TimeTableEntry>>
+
+    suspend fun deleteAssignment(id: Long): Response<String>
 }
+
 class MainAppRepoImpl @Inject constructor(private val mainAppApi: MainAppApi): MainAppRepo
 {
 
@@ -109,6 +115,14 @@ class MainAppRepoImpl @Inject constructor(private val mainAppApi: MainAppApi): M
 
     override suspend fun getHolidays(): Response<List<HolidayEntity>> {
         return mainAppApi.getHolidays()
+    }
+
+    override suspend fun getTeacherTimeTable(email: String): Response<List<TimeTableEntry>> {
+        return mainAppApi.getTeacherTimeTable(email)
+    }
+
+    override suspend fun deleteAssignment(id: Long): Response<String> {
+        return mainAppApi.deleteAssignment(id)
     }
 }
 

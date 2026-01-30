@@ -35,6 +35,9 @@ import com.yash.edusmart.viewmodel.ChatViewModel
 import com.yash.edusmart.viewmodel.MainAppUiState
 import com.yash.edusmart.viewmodel.MainAppViewModel
 import com.yash.edusmart.viewmodel.UserUiState
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlin.collections.emptyList
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -64,14 +67,19 @@ fun AssignmentScreen(innerPadding: PaddingValues,
         }
     }
 
+    val today = LocalDate.now()
 
+    val filteredStudentAssignments = assigns.filter { a ->
+        val deadlineDate = a.deadline.toLocalDate()
+        !deadlineDate.isBefore(today)   // ✅ today OR future
+    }
     Box(modifier = Modifier
         .padding(innerPadding)
         .fillMaxSize()) {
 
         LazyColumn {
             if(isStudent) {
-                items(assigns) { a ->
+                items(filteredStudentAssignments) { a ->
                     var checked by remember { mutableStateOf(a.isCompleted) }
                     TaskAlert(
                         heading = "Assignment",
@@ -96,7 +104,10 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                         deadline = chatViewModel.formatDate(a.deadline),
                         isStudent = false,
                         isTeacher = true,
-                        completedByNames = a.enroll
+                        completedByNames = a.enroll,
+                        onDeleteClick = {
+                            mainAppViewModel.deleteById(id = a.id)
+                        }
                     )
                 }
             }
@@ -128,4 +139,12 @@ fun AssignmentScreen(innerPadding: PaddingValues,
         }
     }
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun Long.toLocalDate(): LocalDate {
+    return Instant.ofEpochMilli(this)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+}
+
 

@@ -48,4 +48,7 @@ interface AssignmentDao
     """)
     suspend fun updateEnrollOnly(id: Long, newEnrollCom: List<String>)
 
+    @Query("DELETE FROM assignments WHERE id NOT IN (:validIds)")
+    suspend fun deleteExtras(validIds: List<Long>)
+
 }

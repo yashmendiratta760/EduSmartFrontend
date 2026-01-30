@@ -6,10 +6,13 @@ import com.yash.edusmart.data.AssignmentGetDTO
 import com.yash.edusmart.data.AttendanceUploadDTO
 import com.yash.edusmart.data.TimeTableEntry
 import com.yash.edusmart.db.Assignments
+import com.yash.edusmart.db.TimeTableDTO
+import com.yash.edusmart.db.TimeTableEntries
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Query
 import java.time.LocalDate
 import java.util.Locale
@@ -72,6 +75,16 @@ interface MainAppApi
         @Query("idAss") idAss: Long,
         @Query("enroll")enroll: String
     ): Response<String>
+
+    @GET("/teacher/getMyTImeTable")
+    suspend fun getTeacherTimeTable(
+        @Query("email") email : String
+    ): Response<List<TimeTableEntry>>
+
+    @PUT("/teacher/deleteAssignment")
+    suspend fun deleteAssignment(
+        @Query("id") id: Long
+): Response<String>
 
 
 

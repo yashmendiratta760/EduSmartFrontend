@@ -64,11 +64,7 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
         mainAppViewModel.getAllBranch()
     }
 
-    LaunchedEffect(Unit) {
-        mainAppViewModel.toastEvent.collect { message ->
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        }
-    }
+
 
     val branchSelected = remember { mutableStateOf("Select Branch") }
     val semSelected = remember { mutableStateOf("Select Semester") }
@@ -110,7 +106,7 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
         attendanceListBool.clear()
         attendanceListBool.addAll(
             mainAppUiState.studentDataAttendance.map { student ->
-                StudentAttendance(student.email, false,student.name)
+                StudentAttendance(student.email, null,student.name)
             }
         )
     }
@@ -181,15 +177,28 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+
+                    // PRESENT
                     RadioButton(
-                        selected = student.isPresent,
-                        onClick = { attendanceListBool[index] = student.copy(isPresent = true) }
+                        selected = student.isPresent == true,
+                        onClick = {
+                            attendanceListBool[index] =
+                                student.copy(
+                                    isPresent = if (student.isPresent == true) null else true
+                                )
+                        }
                     )
                     Text("P")
 
+                    // ABSENT
                     RadioButton(
-                        selected = !student.isPresent,
-                        onClick = { attendanceListBool[index] = student.copy(isPresent = false) }
+                        selected = student.isPresent == false,
+                        onClick = {
+                            attendanceListBool[index] =
+                                student.copy(
+                                    isPresent = if (student.isPresent == false) null else false
+                                )
+                        }
                     )
                     Text("A")
                 }
@@ -202,11 +211,19 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
                         .fillMaxWidth()
                         .padding(10.dp),
                     onClick = {
-                        val attendanceList: List<AttendanceStatus> = attendanceListBool.map { it ->
-                            AttendanceStatus(
-                                email = it.email,
-                                status = if (it.isPresent) "PRESENT" else "ABSENT"
-                            )
+
+                        val attendanceList: List<AttendanceStatus> =
+                            attendanceListBool
+                                .filter { it.isPresent != null } // ✅ skip blank
+                                .map {
+                                    AttendanceStatus(
+                                        email = it.email,
+                                        status = if (it.isPresent == true) "PRESENT" else "ABSENT"
+                                    )
+                                }
+                        if (attendanceList.isEmpty()) {
+                            Toast.makeText(context, "Mark at least one student", Toast.LENGTH_SHORT).show()
+                            return@Button
                         }
                         mainAppViewModel.uploadAttendance(
                             attendanceList = attendanceList,
@@ -240,6 +257,6 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
 
 data class StudentAttendance(
     val email: String,
-    var isPresent: Boolean,
+    var isPresent: Boolean?,
     val name: String
 )

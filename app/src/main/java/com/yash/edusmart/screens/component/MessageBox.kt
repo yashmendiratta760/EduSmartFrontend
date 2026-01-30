@@ -39,6 +39,7 @@ fun Messagebox(modifier: Modifier=Modifier,
                message:String?,
                isSent:Boolean,
                id:Int,
+               name: String,
                time:String,
                viewModel: ChatViewModel,
                imageUri:String? = null)
@@ -56,7 +57,7 @@ fun Messagebox(modifier: Modifier=Modifier,
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = {
-//                            viewModel.deleteMessageById(id)
+                            // viewModel.deleteMessageById(id)
                         },
                         onTap = {
                             if (imageUri != null) {
@@ -65,7 +66,7 @@ fun Messagebox(modifier: Modifier=Modifier,
                         }
                     )
                 }
-                .widthIn(max = (LocalConfiguration.current.screenWidthDp / (1.6f)).dp)
+                .widthIn(max = (LocalConfiguration.current.screenWidthDp / 1.6f).dp)
                 .background(
                     color = if (isSent) Color(0xFFD1FCD3) else Color(0xFFFFFFFF),
                     shape = RoundedCornerShape(
@@ -73,22 +74,34 @@ fun Messagebox(modifier: Modifier=Modifier,
                         topEnd = 16.dp,
                         bottomStart = if (isSent) 16.dp else 0.dp,
                         bottomEnd = if (isSent) 0.dp else 16.dp
-
                     )
-
-
                 )
-                .padding(horizontal = 10.dp)
+                .padding(horizontal = 10.dp, vertical = 8.dp)
         ) {
+
+            // ✅ NAME at top
+            Text(
+                text = name,
+                fontSize = 11.sp,
+                color = Color.Gray,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                modifier = Modifier
+                    .align(
+                        if (isSent) Alignment.TopEnd else Alignment.TopStart
+                    )
+                    .padding(bottom = 30.dp)
+            )
+
+            // ✅ TIME at bottom-right
             Text(
                 text = time,
                 fontSize = 10.sp,
                 color = Color.Gray,
                 modifier = Modifier
-                    .padding(start = 50.dp,
-                        top = 25.dp)
                     .align(Alignment.BottomEnd)
+                    .padding(top = 6.dp)
             )
+
 
             if (message != null) {
                 Text(
@@ -98,7 +111,7 @@ fun Messagebox(modifier: Modifier=Modifier,
 
                     modifier = Modifier.padding(start = 1.dp,
                         end = 16.dp,
-                        top = 10.dp,
+                        top = 20.dp,
                         bottom = 8.dp)
                 )
             }

@@ -1,6 +1,7 @@
 package com.yash.edusmart.viewmodel
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Path
 import androidx.lifecycle.ViewModel
@@ -36,21 +37,17 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
     private val _studentUiState = MutableStateFlow(StudentUiState())
     val studentUiState: StateFlow<StudentUiState> = _studentUiState.asStateFlow()
 
-    val isLoggedIn: StateFlow<Boolean> =
-        contextRepo.getLoggedin()
-            .map { it == true }   // null → false
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
-                initialValue = false
-            )
+    val isLoggedIn: StateFlow<Boolean?> =
+        contextRepo.getLoggedin()      // Flow<Boolean?>
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            isLoggedIn
-                .filter { it } // wait until true
-                .collect {
+        viewModelScope.launch {
+            isLoggedIn.collect { logged ->
+                Log.e("IS_LOGGED_IN", logged.toString())
 
+                if (logged == true) {
                     val branch = contextRepo.getBranch().firstOrNull()
                     val semester = contextRepo.getSemester().firstOrNull()
 
@@ -63,6 +60,7 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
                         }
                     }
                 }
+            }
         }
     }
     private val _toastEvent = MutableSharedFlow<String>()

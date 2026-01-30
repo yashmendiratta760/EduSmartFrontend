@@ -20,14 +20,17 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -52,46 +55,51 @@ class ChatViewModel @Inject constructor(
     @Volatile private var activeGroupId: String? = null
 
     fun showToast(message: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main.immediate) {
             _toastEvent.emit(message)
         }
     }
 
-    val isLoggedIn: StateFlow<Boolean> =
-        contextRepo.getLoggedin()
-            .map { it == true }
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
-                initialValue = false
-            )
+    val isLoggedIn: StateFlow<Boolean?> =
+        contextRepo.getLoggedin()      // Flow<Boolean?>
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val userType: StateFlow<String?> =
+        contextRepo.getUserType()      // Flow<Boolean?>
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             try {
-                isLoggedIn
-                    .filter { it }
-                    .distinctUntilChanged()
-                    .collect {
-                        val branch = try {
-                            contextRepo.getBranch().filterNotNull().first()
-                        } catch (e: Exception) {
-                            showToast(e.message ?: "Failed to read branch")
-                            return@collect
+                userType.collect { type ->
+
+                    if(type.equals("STUDENT")) {
+                        isLoggedIn.collect { logged ->
+                            Log.e("IS_LOGGED_IN", logged.toString())
+
+                            if (logged == true) {
+                                val branch = try {
+                                    contextRepo.getBranch().filterNotNull().first()
+                                } catch (e: Exception) {
+                                    showToast(e.message ?: "Failed to read branch")
+                                    return@collect
+                                }
+
+                                val sem = try {
+                                    contextRepo.getSemester().filterNotNull().first()
+                                } catch (e: Exception) {
+                                    showToast(e.message ?: "Failed to read semester")
+                                    return@collect
+                                }
+
+                                _uiState.update { it.copy(branch = branch, sem = sem) }
+
+                                val groupId = "$branch $sem"
+                                start(groupId)
+                            }
                         }
-
-                        val sem = try {
-                            contextRepo.getSemester().filterNotNull().first()
-                        } catch (e: Exception) {
-                            showToast(e.message ?: "Failed to read semester")
-                            return@collect
-                        }
-
-                        _uiState.update { it.copy(branch = branch, sem = sem) }
-
-                        val groupId = "$branch $sem"
-                        start(groupId)
-                    }
+                    }else startTeacher()
+                }
             } catch (e: Exception) {
                 Log.e("ChatViewModel", "init error", e)
                 showToast(e.message ?: "Something went wrong!")
@@ -107,8 +115,36 @@ class ChatViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    suspend fun startTeacher() {
+        val token = contextRepo.getToken().firstOrNull().orEmpty()
+        if (token.isBlank()) return
+        SocketService.connect(token)
+        try {
+            SocketService.subscribePrivate { msg ->
+                try {
+                    val entry = ChatEntries(
+                        message = msg.message,
+                        isSent = false,
+                        sender = msg.sender,
+                        receiver = msg.receiver,
+                        timeStamp = System.currentTimeMillis()
+                    )
+                    addMessage(entry)
+                } catch (e: Exception) {
+                    Log.e("ChatViewModel", "private msg handling failed", e)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ChatViewModel", "subscribePrivate failed", e)
+            showToast(e.message ?: "Failed to subscribe private chat")
+        }
+    }
+
+
     suspend fun start(groupId: String) {
+        Log.e("HIT","HIT")
         if (isConnected && activeGroupId == groupId) return
+        Log.e("HIT2","HIT2")
 
         val token = try {
             contextRepo.getToken().filterNotNull().first()
@@ -118,11 +154,13 @@ class ChatViewModel @Inject constructor(
         }
 
         if (token.isBlank()) return
+        Log.e("HIT3","HIT3")
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 SocketService.connect(token)
                 delay(300)
+                Log.e("HIT4","HIT4")
             } catch (e: Exception) {
                 Log.e("ChatViewModel", "Socket connect failed", e)
                 showToast(e.message ?: "Socket connection failed")
@@ -236,7 +274,12 @@ class ChatViewModel @Inject constructor(
     fun sendAssignment(message: AssignmentDTO, groupId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                Log.e("HIT","hit")
                 SocketService.sendAssignment(message = message, groupId = groupId)
+
+                withContext(Dispatchers.Main) {
+                    showToast("Assignment Uploaded")
+                }
 
                 val parts = groupId.split(" ")
                 assignmentLocalRepo.insert(

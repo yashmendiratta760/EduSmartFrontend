@@ -70,7 +70,7 @@ fun ChatScreen(innerPadding: PaddingValues,
                userUiState: UserUiState,
                studentUiState: StudentUiState){
 
-    val branches = mainAppUiState.branch
+    val branches = mainAppUiState.branch.distinct()
     val context = LocalContext.current
     var studentSelected by remember { mutableIntStateOf(0) }
     var receiver by remember { mutableStateOf("") }
@@ -175,48 +175,37 @@ fun ChatScreen(innerPadding: PaddingValues,
         .padding(innerPadding)
         .navigationBarsPadding()
         .imePadding()) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-
-            if (!isStudent) {
-                Row(
-                    modifier = Modifier.weight(0.6f),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-
-                    Box(modifier = Modifier.weight(1f)) {
-                        CustomDropdownMenu(
-                            options = branches,
-                            selectedOption = selectedBatch,
-                            onOptionSelected = { selectedBatch.value = it }
-                        )
-                    }
-
-                    Box(modifier = Modifier.weight(1f)) {
-                        CustomDropdownMenu(
-                            options = listOf("1","2","3","4","5","6","7","8"),
-                            selectedOption = selectedSemester,
-                            onOptionSelected = { selectedSemester.value = it }
-                        )
-                    }
-                }
-
-            }
-
-            Box(modifier = Modifier.weight(0.4f)) {
+        if (!isStudent) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 CustomDropdownMenu(
-                    options = if (isStudent)
-                        listOf(
-                            "Group Chat(Official)",
-                            "Private Chat",
-                            "Group Chat(Student)"
-                        )
-                    else
-                        listOf("Group Chat", "Private Chat"),
-                    selectedOption = selectedChatType,
-                    onOptionSelected = { selectedChatType.value = it }
+                    options = branches,
+                    selectedOption = selectedBatch,
+                    onOptionSelected = { selectedBatch.value = it }
+                )
+
+                CustomDropdownMenu(
+                    options = listOf("1","2","3","4","5","6","7","8"),
+                    selectedOption = selectedSemester,
+                    onOptionSelected = { selectedSemester.value = it }
                 )
             }
         }
+            CustomDropdownMenu(
+                options = if (isStudent)
+                    listOf(
+                        "Group Chat(Official)",
+                        "Private Chat",
+                        "Group Chat(Student)"
+                    )
+                else
+                    listOf("Group Chat", "Private Chat"),
+                selectedOption = selectedChatType,
+                onOptionSelected = { selectedChatType.value = it }
+            )
+
+
 
 
 
@@ -235,7 +224,8 @@ fun ChatScreen(innerPadding: PaddingValues,
                             isSent = msg.isSent,
                             id = 0,
                             time = chatViewModel.formatTime(msg.timeStamp),
-                            viewModel = chatViewModel
+                            viewModel = chatViewModel,
+                            name = msg.sender
                         )
                     }
 
@@ -299,7 +289,8 @@ fun ChatScreen(innerPadding: PaddingValues,
                             isSent = msg.isSent,
                             id = 0,
                             time = chatViewModel.formatTime(msg.timeStamp),
-                            viewModel = chatViewModel
+                            viewModel = chatViewModel,
+                            name = msg.sender
                         )
                     }
 

@@ -2,6 +2,7 @@ package com.yash.edusmart.screens
 
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -50,6 +51,7 @@ import com.yash.edusmart.viewmodel.MainAppViewModel
 import com.yash.edusmart.viewmodel.StudentUiState
 import com.yash.edusmart.viewmodel.StudentViewModel
 import com.yash.edusmart.viewmodel.UserUiState
+import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -78,6 +80,20 @@ fun MainLogic(navController: NavHostController,
         }
 
     }
+
+    LaunchedEffect(Unit) {
+        launch {
+            mainAppViewModel.toastEvent.collect {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            }
+        }
+        launch {
+            chatViewModel.toastEvent.collect {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     LaunchedEffect(userUiState.email) {
         if (userUiState.email!="null@null.com") {
             mainAppViewModel.getAttendance(userUiState.email)

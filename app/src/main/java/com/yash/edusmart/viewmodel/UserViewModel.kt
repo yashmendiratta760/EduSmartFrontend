@@ -1,5 +1,6 @@
 package com.yash.edusmart.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,43 +29,41 @@ class UserViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(UserUiState())
     val uiState: StateFlow<UserUiState> = _uiState.asStateFlow()
 
-    val isLoggedIn: StateFlow<Boolean> =
-        contextRepo.getLoggedin()
-            .map { it == true }
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
-                false
-            )
+    val isLoggedIn: StateFlow<Boolean?> =
+        contextRepo.getLoggedin()      // Flow<Boolean?>
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            isLoggedIn
-                .filter { it }
-                .collect {
+        viewModelScope.launch {
+            isLoggedIn.collect { logged ->
+                Log.e("IS_LOGGED_IN", logged.toString())
 
-                    val email = contextRepo.getEmail().filterNotNull().first()
-                    val branch = contextRepo.getBranch().filterNotNull().first()
-                    val semester = contextRepo.getSemester().filterNotNull().first()
-                    val name = contextRepo.getName().filterNotNull().first()
-                    val enroll = contextRepo.getEnroll().filterNotNull().first()
-                    val userType = contextRepo.getUserType().filterNotNull().first()
-
+                if (logged == true) {
+                    val email = contextRepo.getEmail().firstOrNull().orEmpty()
+                    val branch = contextRepo.getBranch().firstOrNull().orEmpty()
+                    val semester = contextRepo.getSemester().firstOrNull().orEmpty()
+                    val name = contextRepo.getName().firstOrNull().orEmpty()
+                    val enroll = contextRepo.getEnroll().firstOrNull().orEmpty()
+                    val userType = contextRepo.getUserType().firstOrNull().orEmpty()
 
                     _uiState.update {
                         it.copy(
-                            email = email ?: "",
-                            branch = branch ?: "",
-                            semester = semester ?: "",
-                            name = name ?: "",
-                            enroll = enroll ?: "",
-                            userType = userType ?: ""
+                            email = email,
+                            branch = branch,
+                            semester = semester,
+                            name = name,
+                            enroll = enroll,
+                            userType = userType
                         )
                     }
+                } else if (logged == false) {
+                    _uiState.update { UserUiState() } // reset on logout (optional)
                 }
+                // if logged == null -> do nothing (loading)
+            }
         }
     }
-
     fun setEmail(email: String) {
         _uiState.update { it.copy(email = email) }
     }

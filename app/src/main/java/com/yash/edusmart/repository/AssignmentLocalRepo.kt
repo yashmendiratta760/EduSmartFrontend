@@ -27,6 +27,8 @@ interface AssignmentLocalRepo
     suspend fun updateEnrollOnly(id: Long, newEnrollCom: List<String>)
 
     suspend fun updateIsCompleted(id: Long,isCompleted: Boolean)
+
+    suspend fun deleteExtras(validIds: List<Long>)
 }
 class AssignmentLocalRepoImpl @Inject constructor(private val assignmentDao: AssignmentDao):
     AssignmentLocalRepo{
@@ -63,6 +65,10 @@ class AssignmentLocalRepoImpl @Inject constructor(private val assignmentDao: Ass
 
     override suspend fun updateIsCompleted(id: Long,isCompleted: Boolean) {
         return assignmentDao.updateIsCompleted(id,isCompleted)
+    }
+
+    override suspend fun deleteExtras(validIds: List<Long>) {
+        return assignmentDao.deleteExtras(validIds)
     }
 
 

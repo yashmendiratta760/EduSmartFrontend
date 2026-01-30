@@ -38,7 +38,7 @@ fun AssignmentUploadDataScreen(
 ) {
     var description by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
-    val branches = mainAppUiState.branch
+    val branches = mainAppUiState.branch.distinct()
     val batch = remember { mutableStateOf("Select batch") }
     val sem = remember { mutableStateOf("Select Semester") }
 
@@ -63,7 +63,7 @@ fun AssignmentUploadDataScreen(
             TopAppBar(
                 scrollBehavior = scrollBehavior,
                 title = {
-                    Text(text = "Chat Box",
+                    Text(text = "Upload Assignment",
                         fontSize = 35.sp)
                 },
                 navigationIcon = {

@@ -74,6 +74,12 @@ object TokenManager {
         }
     }
 
+    suspend fun clearLogin(context: Context) {
+        context.dataStore.edit { prefs ->
+            prefs.remove(IS_LOGGEDIN)
+        }
+    }
+
     suspend fun saveBranch(context: Context, branch: String) {
         context.dataStore.edit { prefs ->
             prefs[BRANCH] = branch

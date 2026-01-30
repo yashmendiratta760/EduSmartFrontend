@@ -3,6 +3,7 @@ package com.yash.edusmart.screens.teacher
 import android.annotation.SuppressLint
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -45,6 +46,7 @@ import com.yash.edusmart.viewmodel.MainAppUiState
 import com.yash.edusmart.viewmodel.MainAppViewModel
 import com.yash.edusmart.viewmodel.StudentUiState
 import com.yash.edusmart.viewmodel.UserUiState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -69,6 +71,16 @@ fun TeacherMainLogic(navController: NavHostController,
         Triple("Settings", Icons.Outlined.Settings, Icons.Default.Settings)
     )
     var selectedIndex by remember { mutableIntStateOf(0) }
+    LaunchedEffect(chatViewModel) {
+        chatViewModel.toastEvent.collect {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        }
+    }
+    LaunchedEffect(mainAppViewModel) {
+        mainAppViewModel.toastEvent.collect {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        }
+    }
 
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -88,6 +100,7 @@ fun TeacherMainLogic(navController: NavHostController,
             mainAppViewModel.getAssignments()
         }
     }
+    val selectedDay = remember { mutableStateOf(studentUiState.daySelected) }
 
     LaunchedEffect(selectedBatch.value, selectedSemester.value){
 
@@ -174,6 +187,14 @@ fun TeacherMainLogic(navController: NavHostController,
                 mainAppViewModel = mainAppViewModel,
                 navController = navController,
                 scrollBehavior = scrollBehavior)
+
+            1->TimeTableTeacher(
+                innerPadding = innerPadding,
+                selectedDay = selectedDay,
+                mainAppViewModel=mainAppViewModel,
+                mainAppUiState = mainAppUiState,
+                userUiState = userUiState
+            )
             2-> AssignmentScreen(innerPadding = innerPadding,
                 chatViewModel=chatViewModel,
                 chatUiState = chatUiState,

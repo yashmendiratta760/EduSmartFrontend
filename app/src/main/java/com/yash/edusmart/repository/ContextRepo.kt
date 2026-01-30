@@ -78,7 +78,7 @@ class ContextRepo @Inject constructor(
     }
 
     suspend fun clearLoggedin(){
-        TokenManager.clearToken(context)
+        TokenManager.clearLogin(context)
     }
 
     suspend fun saveEnroll(enroll: String) {

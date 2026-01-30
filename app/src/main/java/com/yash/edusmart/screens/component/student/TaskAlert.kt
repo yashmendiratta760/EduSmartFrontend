@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,9 +31,10 @@ import androidx.compose.ui.unit.sp
 
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-
 @Composable
 fun TaskAlert(
     heading: String,
@@ -40,9 +43,10 @@ fun TaskAlert(
     task: String,
     deadline: String,
     checked: Boolean = false,
-    completedByNames:List<String> = emptyList(),
-    onCheckedChange:(Boolean)-> Unit = {},
-    onSubmit: () -> Unit = {}
+    completedByNames: List<String> = emptyList(),
+    onCheckedChange: (Boolean) -> Unit = {},
+    onSubmit: () -> Unit = {},
+    onDeleteClick: () -> Unit = {}
 ) {
 
     Box(
@@ -60,40 +64,50 @@ fun TaskAlert(
                 shape = RoundedCornerShape(30.dp)
             )
     ) {
+
+        // ✅ Delete icon pinned to top-right corner
+        if (!isStudent) {
+            IconButton(
+                onClick = onDeleteClick,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding( 20.dp)
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = "DELETE", tint = Color.White)
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(20.dp)
+
         ) {
 
-            // Top row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = heading,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 23.sp
-                )
-                Text(
-                    text = "deadline: $deadline",
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 23.sp
-                )
-            }
 
-            // Task text takes remaining space
+            Text(
+                text = heading,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 18.sp,
+                color = Color.White
+            )
+            Text(
+                text = "Deadline: $deadline",
+                fontSize = 14.sp,
+                color = Color.White
+            )
+
+
             Text(
                 text = task,
                 fontSize = 20.sp,
+                color = Color.White,
                 modifier = Modifier
                     .padding(top = 10.dp)
                     .weight(1f)
             )
 
-            if(isStudent) {
-                // Bottom row: checkbox + button
+            if (isStudent) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -102,11 +116,9 @@ fun TaskAlert(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
                             checked = checked,
-                            onCheckedChange = {
-                                onCheckedChange(it)
-                            }
+                            onCheckedChange = { onCheckedChange(it) }
                         )
-                        Text("Completed")
+                        Text("Completed", color = Color.White)
                     }
 
                     Button(
@@ -117,10 +129,9 @@ fun TaskAlert(
                     }
                 }
             }
-            if(isTeacher){
-                CompletedByExpandable(
-                    completedBy = completedByNames
-                )
+
+            if (isTeacher) {
+                CompletedByExpandable(completedBy = completedByNames)
             }
         }
     }
