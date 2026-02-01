@@ -17,5 +17,8 @@ interface TimeTableDao{
 
     @Query("select * from timetableentity where branch = :branch and semester = :semester")
     suspend fun getDataByBranchAndSemester(branch: String,semester: Int):List<TimeTableEntries>
+
+    @Query("delete from timetableentity")
+    suspend fun deleteAll()
 }
 

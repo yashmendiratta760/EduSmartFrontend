@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -52,7 +53,8 @@ import com.yash.edusmart.R
 import com.yash.edusmart.data.AssignmentDTO
 import com.yash.edusmart.viewmodel.StudentUiState
 import com.yash.edusmart.viewmodel.UserUiState
-
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -111,20 +113,30 @@ fun ChatScreen(innerPadding: PaddingValues,
 
 
 
-
-    LaunchedEffect(selectedBatch.value , selectedSemester.value){
-        if(selectedBatch.value!="Select Branch" && selectedSemester.value!="Select Semester") {
-            mainAppViewModel.getStudentListTeacherChat(
-                branch = selectedBatch.value,
-                semester = selectedSemester.value
-            )
+    if(!isStudent) {
+        LaunchedEffect(selectedBatch.value, selectedSemester.value) {
+            if (selectedBatch.value != "Select Branch" && selectedSemester.value != "Select Semester") {
+                mainAppViewModel.getStudentListTeacherChat(
+                    branch = selectedBatch.value,
+                    semester = selectedSemester.value
+                )
+            }
         }
     }
 
+
     if(isStudent){
         LaunchedEffect(selectedChatType.value) {
-            mainAppViewModel.getStudentListStudentChat(branch =  studentUiState.branch,
-                semester = studentUiState.semester.toString())
+            if(selectedChatType.value=="Private Chat") {
+                mainAppViewModel.getStudentListStudentChat(
+                    branch = studentUiState.branch,
+                    semester = studentUiState.semester.toString()
+                )
+                mainAppViewModel.getAllTeacher(
+                    studentUiState.branch,
+                    studentUiState.semester.toString()
+                )
+            }
         }
     }
 
@@ -174,7 +186,8 @@ fun ChatScreen(innerPadding: PaddingValues,
         .fillMaxWidth()
         .padding(innerPadding)
         .navigationBarsPadding()
-        .imePadding()) {
+        .imePadding()
+        .windowInsetsPadding(WindowInsets.ime)) {
         if (!isStudent) {
             Column(
                 modifier = Modifier.fillMaxWidth()
@@ -240,7 +253,25 @@ fun ChatScreen(innerPadding: PaddingValues,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(onClick = {
+                                    chatViewModel.syncPrivateHistory(st.email)
                                     studentSelected = 1
+                                    receiver = st.email
+                                    canNavigateBack(true)
+                                })){
+                            Image(painter = painterResource(R.drawable.google_logo),
+                                contentDescription = "",
+                                modifier = Modifier.size(70.dp))
+                            Text(text = st.name)
+                        }
+                    }
+                    items(mainAppUiState.teacher) { st ->
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = {
+                                    chatViewModel.syncPrivateHistory(st.email)
+                                    studentSelected = 1
+                                    receiver = st.email
                                     canNavigateBack(true)
                                 })){
                             Image(painter = painterResource(R.drawable.google_logo),

@@ -84,12 +84,63 @@ interface MainAppApi
     @PUT("/teacher/deleteAssignment")
     suspend fun deleteAssignment(
         @Query("id") id: Long
-): Response<String>
+    ): Response<String>
+
+    @GET("/student/getMessagesByBranchAndSem")
+    suspend fun getGroupMessages(
+        @Query("branch") branch: String,
+        @Query("sem") sem: String
+    ): Response<List<ChatEntity>>
+
+    @GET("/student/getPvtMsg")
+    suspend fun getPrivateConversation(
+        @Query("email") email: String,
+        @Query("receiverEmail") receiverEmail: String
+    ): Response<List<ChatEntity>>
+
+    @PUT("/student/addPvtMsg")
+    suspend fun addMsg(
+        @Body chatEntity: ChatEntity
+    ): Response<String>
+
+    @GET("/teacher/getMessagesByEmailAndBranchAndSem")
+    suspend fun getGroupMessagesTeacher(
+        @Query("email") email: String,
+        @Query("branch") branch: String,
+        @Query("sem") sem: String
+    ): Response<List<ChatEntity>>
+
+    // /teacher/getPvtMsg?email=a&receiverEmail=b
+    @GET("/teacher/getPvtMsg")
+    suspend fun getPrivateConversationTeacher(
+        @Query("email") email: String,
+        @Query("receiverEmail") receiverEmail: String
+    ): Response<List<ChatEntity>>
+
+    @GET("/student/getAllTeachers")
+    suspend fun getAllTeacher(
+        @Query("branch") branch: String,
+        @Query("sem") sem: String
+    ): Response<List<TeacherDTO>>
 
 
 
 
 }
+data class TeacherDTO(
+    val name: String,
+    val email: String
+)
+
+data class ChatEntity(
+    val id: Long? = null,
+    val msg: String,
+    val isSent: Boolean,
+    val sender: String,
+    val receiver: String,
+    val timeStamp: Long
+)
+
 
 data class HolidayEntity(
     val id: Long,

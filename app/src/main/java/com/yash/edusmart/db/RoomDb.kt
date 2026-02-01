@@ -11,7 +11,7 @@ import androidx.room.TypeConverters
 import java.time.LocalDate
 
 @TypeConverters(Converters::class, LocalDateConverter::class)
-@Database(entities = [TimeTableEntries::class, ChatEntries::class, Assignments::class, Holidays::class], version = 8, exportSchema = false)
+@Database(entities = [TimeTableEntries::class, ChatEntries::class, Assignments::class, Holidays::class], version = 9, exportSchema = false)
 abstract class RoomDb: RoomDatabase()
 {
     abstract fun timeTableDao(): TimeTableDao

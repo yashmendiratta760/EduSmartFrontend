@@ -2,10 +2,12 @@ package com.yash.edusmart.repository
 
 import com.yash.edusmart.api.AssignmentStudent
 import com.yash.edusmart.api.AttendanceDTO
+import com.yash.edusmart.api.ChatEntity
 import com.yash.edusmart.api.HolidayEntity
 import com.yash.edusmart.api.MainAppApi
 import com.yash.edusmart.api.StudentData
 import com.yash.edusmart.api.StudentsListDTO
+import com.yash.edusmart.api.TeacherDTO
 import com.yash.edusmart.data.AssignmentGetDTO
 import com.yash.edusmart.data.AttendanceUploadDTO
 import com.yash.edusmart.data.TimeTableEntry
@@ -51,6 +53,38 @@ interface MainAppRepo
     suspend fun getTeacherTimeTable(email : String): Response<List<TimeTableEntry>>
 
     suspend fun deleteAssignment(id: Long): Response<String>
+
+    suspend fun getStudentGroupMessages(
+        branch: String,
+        sem: String
+    ): Response<List<ChatEntity>>
+
+    suspend fun getStudentPrivateConversation(
+        email: String,
+        receiverEmail: String
+    ): Response<List<ChatEntity>>
+
+    suspend fun addPrivateMessage(
+        chatEntity: ChatEntity
+    ): Response<String>
+
+
+    /* ---------------- TEACHER ---------------- */
+
+    suspend fun getTeacherGroupMessages(
+        email: String,
+        branch: String,
+        sem: String
+    ): Response<List<ChatEntity>>
+
+    suspend fun getTeacherPrivateConversation(
+        email: String,
+        receiverEmail: String
+    ): Response<List<ChatEntity>>
+
+    suspend fun getAllTeacher(
+        branch: String, sem: String
+    ): Response<List<TeacherDTO>>
 }
 
 class MainAppRepoImpl @Inject constructor(private val mainAppApi: MainAppApi): MainAppRepo
@@ -123,6 +157,51 @@ class MainAppRepoImpl @Inject constructor(private val mainAppApi: MainAppApi): M
 
     override suspend fun deleteAssignment(id: Long): Response<String> {
         return mainAppApi.deleteAssignment(id)
+    }
+
+    override suspend fun getStudentGroupMessages(
+        branch: String,
+        sem: String
+    ): Response<List<ChatEntity>> {
+        return mainAppApi.getGroupMessages(branch, sem)
+    }
+
+    override suspend fun getStudentPrivateConversation(
+        email: String,
+        receiverEmail: String
+    ): Response<List<ChatEntity>> {
+        return mainAppApi.getPrivateConversation(email, receiverEmail)
+    }
+
+    override suspend fun addPrivateMessage(
+        chatEntity: ChatEntity
+    ): Response<String> {
+        return mainAppApi.addMsg(chatEntity)
+    }
+
+
+    /* ---------------- TEACHER ---------------- */
+
+    override suspend fun getTeacherGroupMessages(
+        email: String,
+        branch: String,
+        sem: String
+    ): Response<List<ChatEntity>> {
+        return mainAppApi.getGroupMessagesTeacher(email, branch, sem)
+    }
+
+    override suspend fun getTeacherPrivateConversation(
+        email: String,
+        receiverEmail: String
+    ): Response<List<ChatEntity>> {
+        return mainAppApi.getPrivateConversationTeacher(email, receiverEmail)
+    }
+
+    override suspend fun getAllTeacher(
+        branch: String,
+        sem: String
+    ): Response<List<TeacherDTO>> {
+        return mainAppApi.getAllTeacher(branch,sem)
     }
 }
 

@@ -15,6 +15,8 @@ interface LocalDbRepo
     suspend fun getDataByBranchAndSemester(branch: String,semester: Int):List<TimeTableEntries>
     suspend fun insert(item: TimeTableEntries)
     suspend fun update(item: TimeTableEntries)
+
+    suspend fun deleteAll()
 }
 class LocalDbRepoImpl @Inject constructor(private val timeTableDao: TimeTableDao): LocalDbRepo{
     override suspend fun getDataByBranchAndSemester(branch: String,semester: Int): List<TimeTableEntries> {
@@ -28,6 +30,10 @@ class LocalDbRepoImpl @Inject constructor(private val timeTableDao: TimeTableDao
 
     override suspend fun update(item: TimeTableEntries) {
         return timeTableDao.updateEntry(item)
+    }
+
+    override suspend fun deleteAll() {
+        return timeTableDao.deleteAll()
     }
 
 }

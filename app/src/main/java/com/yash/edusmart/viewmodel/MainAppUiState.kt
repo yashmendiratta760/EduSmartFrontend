@@ -2,6 +2,7 @@ package com.yash.edusmart.viewmodel
 
 import com.yash.edusmart.api.AttendanceDTO
 import com.yash.edusmart.api.StudentData
+import com.yash.edusmart.api.TeacherDTO
 import com.yash.edusmart.data.AssignmentGetDTO
 import com.yash.edusmart.data.TimeTableEntry
 import com.yash.edusmart.db.Assignments
@@ -17,5 +18,6 @@ data class MainAppUiState(
     val subjectList:List<String> = emptyList(),
     val branch:List<String> = emptyList(),
     val assignments:List<AssignmentGetDTO> = emptyList(),
-    val timeTableTeacher:List<TimeTableEntry> = emptyList()
+    val timeTableTeacher:List<TimeTableEntry> = emptyList(),
+    val teacher:List<TeacherDTO> = emptyList()
 )

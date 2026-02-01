@@ -51,4 +51,7 @@ interface AssignmentDao
     @Query("DELETE FROM assignments WHERE id NOT IN (:validIds)")
     suspend fun deleteExtras(validIds: List<Long>)
 
+    @Query("delete from assignments")
+    suspend fun deleteAll()
+
 }

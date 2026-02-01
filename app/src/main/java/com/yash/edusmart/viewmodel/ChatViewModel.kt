@@ -3,6 +3,8 @@ package com.yash.edusmart.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yash.edusmart.api.ChatEntity
+import com.yash.edusmart.api.MainAppApi
 import com.yash.edusmart.data.AssignmentDTO
 import com.yash.edusmart.data.ChatMessage
 import com.yash.edusmart.db.Assignments
@@ -21,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -40,7 +43,8 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor(
     private val chatLocalDbRepo: ChatLocalDbRepo,
     private val contextRepo: ContextRepo,
-    private val assignmentLocalRepo: AssignmentLocalRepo
+    private val assignmentLocalRepo: AssignmentLocalRepo,
+    private val mainAppApi: MainAppApi
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -53,6 +57,13 @@ class ChatViewModel @Inject constructor(
 
     @Volatile private var isConnected = false
     @Volatile private var activeGroupId: String? = null
+
+    @Volatile private var privateSubscribed = false
+    @Volatile private var groupSubscribedFor: String? = null
+    @Volatile private var assignmentSubscribedFor: String? = null
+    @Volatile private var socketConnected = false
+
+
 
     fun showToast(message: String) {
         viewModelScope.launch(Dispatchers.Main.immediate) {
@@ -70,42 +81,23 @@ class ChatViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            try {
-                userType.collect { type ->
+            combine(userType, isLoggedIn) { type, logged -> type to logged }
+                .distinctUntilChanged()
+                .collect { (type, logged) ->
+                    if (logged != true) return@collect
 
-                    if(type.equals("STUDENT")) {
-                        isLoggedIn.collect { logged ->
-                            Log.e("IS_LOGGED_IN", logged.toString())
-
-                            if (logged == true) {
-                                val branch = try {
-                                    contextRepo.getBranch().filterNotNull().first()
-                                } catch (e: Exception) {
-                                    showToast(e.message ?: "Failed to read branch")
-                                    return@collect
-                                }
-
-                                val sem = try {
-                                    contextRepo.getSemester().filterNotNull().first()
-                                } catch (e: Exception) {
-                                    showToast(e.message ?: "Failed to read semester")
-                                    return@collect
-                                }
-
-                                _uiState.update { it.copy(branch = branch, sem = sem) }
-
-                                val groupId = "$branch $sem"
-                                start(groupId)
-                            }
-                        }
-                    }else startTeacher()
+                    if (type == "STUDENT") {
+                        val branch = contextRepo.getBranch().filterNotNull().first()
+                        val sem = contextRepo.getSemester().filterNotNull().first()
+                        _uiState.update { it.copy(branch = branch, sem = sem) }
+                        start("$branch $sem")
+                    } else if (type == "TEACHER") {
+                        startTeacher()
+                    }
                 }
-            } catch (e: Exception) {
-                Log.e("ChatViewModel", "init error", e)
-                showToast(e.message ?: "Something went wrong!")
-            }
         }
     }
+
 
     val messages = chatLocalDbRepo.getMessages()
         .map { list -> list.sortedByDescending { it.timeStamp } }
@@ -118,138 +110,110 @@ class ChatViewModel @Inject constructor(
     suspend fun startTeacher() {
         val token = contextRepo.getToken().firstOrNull().orEmpty()
         if (token.isBlank()) return
-        SocketService.connect(token)
-        try {
-            SocketService.subscribePrivate { msg ->
-                try {
-                    val entry = ChatEntries(
-                        message = msg.message,
-                        isSent = false,
-                        sender = msg.sender,
-                        receiver = msg.receiver,
-                        timeStamp = System.currentTimeMillis()
-                    )
-                    addMessage(entry)
-                } catch (e: Exception) {
-                    Log.e("ChatViewModel", "private msg handling failed", e)
-                }
+
+        if (!socketConnected) {
+            SocketService.connect(token)
+            socketConnected = true
+        }
+        isConnected = true
+
+        ensurePrivateSubscribed() // ✅ only one place
+    }
+
+    private fun ensurePrivateSubscribed() {
+        if (privateSubscribed) return
+        privateSubscribed = true
+
+        SocketService.subscribePrivate { msg ->
+            try {
+                syncPrivateHistory(msg.sender)
+                val entry = ChatEntries(
+                    message = msg.message,
+                    isSent = false,
+                    sender = msg.sender,
+                    receiver = msg.receiver,
+                    timeStamp = System.currentTimeMillis()
+                )
+                addMessage(entry)
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "private msg handling failed", e)
             }
-        } catch (e: Exception) {
-            Log.e("ChatViewModel", "subscribePrivate failed", e)
-            showToast(e.message ?: "Failed to subscribe private chat")
         }
     }
+    private fun ensureGroupSubscribed(groupId: String, myEmail: String) {
+        if (groupSubscribedFor == groupId) return
+        groupSubscribedFor = groupId
+
+        SocketService.subscribeGroup(groupId = groupId
+        , onMessage = {  msg ->
+            if (msg.sender == myEmail) return@subscribeGroup
+            addMessage(
+                ChatEntries(
+                    message = msg.message,
+                    isSent = false,
+                    sender = msg.sender,
+                    receiver = msg.receiver,
+                    timeStamp = System.currentTimeMillis()
+                )
+            )
+        }
+        )
+    }
+    private fun ensureAssignmentSubscribed(groupId: String, myEmail: String) {
+        if (assignmentSubscribedFor == groupId) return
+        assignmentSubscribedFor = groupId
+
+        SocketService.subscribeAssignment(groupId = groupId,
+            onMessage = { msg ->
+            if (msg.sender == myEmail) return@subscribeAssignment
+            val parts = groupId.split(" ")
+            addAssignment(
+                Assignments(
+                    enrollCom = emptyList(),
+                    task = msg.task,
+                    deadline = msg.deadline,
+                    branch = parts.getOrNull(0) ?: "",
+                    sem = parts.getOrNull(1) ?: "",
+                    isCompleted = false
+                )
+            )
+        })
+    }
+
 
 
     suspend fun start(groupId: String) {
-        Log.e("HIT","HIT")
         if (isConnected && activeGroupId == groupId) return
-        Log.e("HIT2","HIT2")
 
-        val token = try {
-            contextRepo.getToken().filterNotNull().first()
-        } catch (e: Exception) {
-            showToast(e.message ?: "Failed to read token")
-            return
-        }
+        syncGroupHistory()
 
+        val token = contextRepo.getToken().filterNotNull().first()
         if (token.isBlank()) return
-        Log.e("HIT3","HIT3")
+
+        val myEmail = contextRepo.getEmail().filterNotNull().first()
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                SocketService.connect(token)
+                if (!socketConnected) {
+                    SocketService.connect(token)
+                    socketConnected = true
+                }
                 delay(300)
-                Log.e("HIT4","HIT4")
+
+                isConnected = true
+                activeGroupId = groupId
+
+                ensurePrivateSubscribed()
+                ensureGroupSubscribed(groupId, myEmail)
+                ensureAssignmentSubscribed(groupId, myEmail)
+
             } catch (e: Exception) {
-                Log.e("ChatViewModel", "Socket connect failed", e)
+                Log.e("ChatViewModel", "start failed", e)
                 showToast(e.message ?: "Socket connection failed")
-                return@launch
-            }
-
-            launch {
-                val email = try {
-                    contextRepo.getEmail().filterNotNull().first()
-                } catch (e: Exception) {
-                    showToast(e.message ?: "Failed to read email")
-                    return@launch
-                }
-
-                // ✅ Group Chat subscription
-                try {
-                    SocketService.subscribeGroup(
-                        groupId = groupId,
-                        onMessage = { msg ->
-                            try {
-                                if (msg.sender == email) return@subscribeGroup
-                                val entry = ChatEntries(
-                                    message = msg.message,
-                                    isSent = false,
-                                    sender = msg.sender,
-                                    receiver = msg.receiver,
-                                    timeStamp = System.currentTimeMillis()
-                                )
-                                addMessage(entry)
-                            } catch (e: Exception) {
-                                Log.e("ChatViewModel", "group msg handling failed", e)
-                            }
-                        }
-                    )
-                } catch (e: Exception) {
-                    Log.e("ChatViewModel", "subscribeGroup failed", e)
-                    showToast(e.message ?: "Failed to subscribe group chat")
-                }
-
-                // ✅ Assignment subscription
-                try {
-                    SocketService.subscribeAssignment(
-                        groupId = groupId,
-                        onMessage = { msg ->
-                            try {
-                                if (msg.sender == email) return@subscribeAssignment
-                                val parts = groupId.split(" ")
-                                val entry = Assignments(
-                                    enrollCom = emptyList(),
-                                    task = msg.task,
-                                    deadline = msg.deadline,
-                                    branch = parts.getOrNull(0) ?: "",
-                                    sem = parts.getOrNull(1) ?: "",
-                                    isCompleted = false
-                                )
-                                addAssignment(entry)
-                            } catch (e: Exception) {
-                                Log.e("ChatViewModel", "assignment msg handling failed", e)
-                            }
-                        }
-                    )
-                } catch (e: Exception) {
-                    Log.e("ChatViewModel", "subscribeAssignment failed", e)
-                    showToast(e.message ?: "Failed to subscribe assignments")
-                }
-
-                // ✅ Private subscription
-                try {
-                    SocketService.subscribePrivate { msg ->
-                        try {
-                            val entry = ChatEntries(
-                                message = msg.message,
-                                isSent = false,
-                                sender = msg.sender,
-                                receiver = msg.receiver,
-                                timeStamp = System.currentTimeMillis()
-                            )
-                            addMessage(entry)
-                        } catch (e: Exception) {
-                            Log.e("ChatViewModel", "private msg handling failed", e)
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e("ChatViewModel", "subscribePrivate failed", e)
-                    showToast(e.message ?: "Failed to subscribe private chat")
-                }
             }
         }
     }
+
 
     fun sendPrivate(message: ChatMessage) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -301,6 +265,7 @@ class ChatViewModel @Inject constructor(
     fun addMessage(data: ChatEntries) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+//                mainAppApi.addMsg(ChatEntity(msg = data.message, isSent = data.isSent, sender = data.sender, receiver = data.receiver, timeStamp = data.timeStamp))
                 chatLocalDbRepo.insert(data)
             } catch (e: Exception) {
                 showToast(e.message ?: "Failed to save message")
@@ -331,6 +296,97 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
+
+    fun syncGroupHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val branch = contextRepo.getBranch().filterNotNull().first()
+                val sem = contextRepo.getSemester().filterNotNull().first()
+                val groupId = "$branch $sem"
+
+                val res = mainAppApi.getGroupMessages(branch, sem)
+                if (!res.isSuccessful) return@launch
+
+                val serverList = res.body().orEmpty().sortedBy { it.timeStamp }
+
+                val serverIds = serverList.mapNotNull { it.id }
+                if (serverIds.isEmpty()) return@launch  // safety: don't delete everything
+
+                val localList = serverList.mapNotNull { m ->
+                    val sid = m.id ?: return@mapNotNull null
+                    ChatEntries(
+                        id = sid,                  // ✅ server id as PK
+                        message = m.msg,
+                        isSent = false,            // group: student receives
+                        sender = m.sender,
+                        receiver = groupId,        // ✅ receiver key for group
+                        timeStamp = m.timeStamp
+                    )
+                }
+
+                chatLocalDbRepo.upsertAll(localList)
+                chatLocalDbRepo.deleteNotInServer(groupId, serverIds)
+
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "syncGroupHistory failed", e)
+            }
+        }
+    }
+
+    fun syncPrivateHistory(otherEmail: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val myEmail = contextRepo.getEmail().filterNotNull().first()
+
+                val res = mainAppApi.getPrivateConversation(
+                    email = myEmail,
+                    receiverEmail = otherEmail
+                )
+                if (!res.isSuccessful) return@launch
+
+                val serverList = res.body().orEmpty()
+                val serverIds = serverList.mapNotNull { it.id }
+                if (serverIds.isEmpty()) return@launch
+
+                // 1️⃣ Upsert all messages
+                val localList = serverList.mapNotNull { m ->
+                    val sid = m.id ?: return@mapNotNull null
+                    val mine = m.sender == myEmail
+
+                    ChatEntries(
+                        id = sid,                 // server id as PK
+                        message = m.msg,
+                        isSent = mine,
+                        sender = m.sender,
+                        receiver = m.receiver,    // NO thread key
+                        timeStamp = m.timeStamp
+                    )
+                }
+
+                chatLocalDbRepo.upsertAll(localList)
+
+                // 2️⃣ Delete stale messages SENT BY ME
+                chatLocalDbRepo.deleteNotInServer(
+                    receiver = otherEmail,
+                    serverIds = serverIds
+                )
+
+                // 3️⃣ Delete stale messages SENT BY OTHER USER
+                chatLocalDbRepo.deleteNotInServer(
+                    receiver = myEmail,
+                    serverIds = serverIds
+                )
+
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "syncPrivateHistory failed", e)
+            }
+        }
+    }
+
+
+
+
+
 
     fun formatTime(timestamp: Long): String =
         SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(timestamp))

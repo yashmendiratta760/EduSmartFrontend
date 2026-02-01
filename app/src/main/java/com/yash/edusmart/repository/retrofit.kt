@@ -74,8 +74,8 @@ class NetworkModule {
     fun providesRetrofit(okHttpClient: OkHttpClient):Retrofit
     {
         return Retrofit.Builder()
-            .baseUrl(getUrl())
-//            .baseUrl("http://192.168.0.102:8080/")
+            .baseUrl("https://edusmartbackend-z95q.onrender.com/")
+//            .baseUrl(getUrl())
             .client(okHttpClient)
             .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(GsonConverterFactory.create())

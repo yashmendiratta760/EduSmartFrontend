@@ -11,11 +11,16 @@ import javax.inject.Singleton
 
 interface HolidayRepo {
     suspend fun getAll(): List<Holidays>
+    suspend fun deleteAll()
 }
 
 class HolidayRepoImpl @Inject constructor(private val holidaysDao: HolidaysDao): HolidayRepo{
     override suspend fun getAll(): List<Holidays> {
         return holidaysDao.getAll()
+    }
+
+    override suspend fun deleteAll() {
+        return holidaysDao.deleteAll()
     }
 
 }

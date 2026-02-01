@@ -1,5 +1,6 @@
 package com.yash.edusmart.repository
 
+import androidx.room.Query
 import com.yash.edusmart.db.ChatDao
 import com.yash.edusmart.db.ChatEntries
 import dagger.Binds
@@ -16,6 +17,14 @@ interface ChatLocalDbRepo
     suspend fun insert(data: ChatEntries)
 
     fun getMessages(): Flow<List<ChatEntries>>
+    suspend fun deleteAll()
+
+    suspend fun upsertAll(list: List<ChatEntries>)
+
+
+    suspend fun deleteNotInServer(receiver: String, serverIds: List<Long>)
+
+    suspend fun deleteByReceiver(receiver: String)
 }
 class ChatLocalDbRepoImpl @Inject constructor(private val chatDao: ChatDao): ChatLocalDbRepo{
     override suspend fun insert(data: ChatEntries) {
@@ -25,6 +34,26 @@ class ChatLocalDbRepoImpl @Inject constructor(private val chatDao: ChatDao): Cha
     override fun getMessages(): Flow<List<ChatEntries>> {
         return chatDao.getMessages()
     }
+
+    override suspend fun deleteAll() {
+        return chatDao.deleteAll()
+    }
+
+    override suspend fun upsertAll(list: List<ChatEntries>) {
+        return chatDao.upsertAll(list)
+    }
+
+    override suspend fun deleteNotInServer(
+        receiver: String,
+        serverIds: List<Long>
+    ) {
+        return chatDao.deleteNotInServer(receiver,serverIds)
+    }
+
+    override suspend fun deleteByReceiver(receiver: String) {
+        return chatDao.deleteByReceiver(receiver)
+    }
+
 
 }
 

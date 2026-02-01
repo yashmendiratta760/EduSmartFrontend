@@ -126,6 +126,22 @@ class MainAppViewModel @Inject constructor(
         }
     }
 
+    fun getAllTeacher(branch: String,sem: String){
+        viewModelScope.launch(Dispatchers.IO){
+            safeApi(call = {mainAppRepo.getAllTeacher(branch,sem)},
+                onSuccess = {tea->
+                    _uiState.update { it->
+                        it.copy(teacher = tea?:emptyList())
+                    }
+                    Log.e("TEACHERGET",tea.toString())
+                }, onError = {err->
+                    Log.e("TEACHERGET",err)
+                }
+
+            )
+        }
+    }
+
     fun getAssignmentStudent() {
         viewModelScope.launch(Dispatchers.IO) {
             safeApi(
