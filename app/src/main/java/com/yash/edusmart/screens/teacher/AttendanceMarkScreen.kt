@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -122,9 +121,12 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
             }?.subject ?: "Subject Name"
         }
     }
-    Log.d("TEACHER",selectedDayName.uppercase())
 //    Log.d("TEACHER 2",timeTableEntriesTimings.firstOrNull() ?:"NULL@@")
-    val branches = mainAppUiState.branch.distinct()
+    val branches by remember(mainAppUiState.branch) {
+        derivedStateOf {
+            mainAppUiState.branch.distinct()
+        }
+    }
     val semester = listOf("1","2","3","4","5","6","7","8")
     LazyColumn(modifier = Modifier.padding(innerPadding)
         .fillMaxSize()
@@ -132,19 +134,19 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
         item {
             CustomDropdownMenu(
                 options = branches,
-                selectedOption = branchSelected
+                selectedOption = branchSelected.value
             ) { selectedOpt ->
                 branchSelected.value = selectedOpt
             }
             CustomDropdownMenu(
                 options = semester,
-                selectedOption = semSelected
+                selectedOption = semSelected.value
             ) { selectedOpt ->
                 semSelected.value = selectedOpt
             }
             DatePickerMenu(dateSelected)
             CustomDropdownMenu(options = timeTableEntriesTimings,
-                selectedOption = selectedTiming){selectedOpt->
+                selectedOption = selectedTiming.value){selectedOpt->
                 selectedTiming.value = selectedOpt
             }
             TextField(value = subjectName,

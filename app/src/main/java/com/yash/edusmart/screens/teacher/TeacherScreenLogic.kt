@@ -62,7 +62,6 @@ fun TeacherMainLogic(navController: NavHostController,
                      studentUiState: StudentUiState,
                      loginUiState: LoginUiState){
     val context = LocalContext.current
-    val selectedOption = remember { mutableStateOf("") }
     val bottomBarItems = listOf(
         Triple("Attendance", Icons.Outlined.Timelapse, Icons.Default.Timelapse),
         Triple("TimeTable", Icons.Outlined.CalendarMonth, Icons.Default.CalendarMonth),
@@ -108,7 +107,6 @@ fun TeacherMainLogic(navController: NavHostController,
             mainAppViewModel.getTimeTableByBranchAndSemesterTeacher(selectedBatch.value, selectedSemester.value.toInt())
             mainAppViewModel.getTimeTableEntries(selectedBatch.value, selectedSemester.value.toInt())
         }
-        Log.d("ENTRYYYY",mainAppUiState.timeTableEntries.toString())
     }
 
 

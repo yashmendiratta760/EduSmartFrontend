@@ -23,7 +23,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,34 +60,68 @@ fun HomeScreen(innerPadding: PaddingValues,
                selectedIndexSend:(Int)->Unit){
 
 
-    var assigns by remember {
-        mutableStateOf<List<Assignments>>(emptyList())
-    }
+    val assigns = remember { mutableStateListOf<Assignments>() }
 
     LaunchedEffect(chatUiState.assignments) {
-        assigns=chatUiState.assignments
+        assigns.clear()
+        assigns.addAll(chatUiState.assignments)
     }
 
-    val dates = mainAppUiState.attendance.map { Triple(it.date, it.status, it.subject) }
-    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val presentDatesLocal: List<LocalDate> = dates
-        .filter { it.second.equals("PRESENT", ignoreCase = true) }
-        .map { LocalDate.parse(it.first, formatter) }
 
 
-    val formatterTime = DateTimeFormatter.ofPattern("HH:mm")
+    val totalAttendance by remember(mainAppUiState.attendance) {
+        derivedStateOf { mainAppUiState.attendance.size }
+    }
 
-    val sortedEntries = mainAppUiState.timeTableEntries
-        .filter { it.day.uppercase() == selectedDay.value.uppercase() }
-        .sortedBy { entry ->
-            try {
-                val startTime = entry.timing.split("-").first().trim()
-                LocalTime.parse(startTime, formatterTime)
-            } catch (e: Exception) {
-                LocalTime.MAX // fallback: put unparsable timings at the end
+    val presentAttendance by remember(mainAppUiState.attendance) {
+        derivedStateOf { mainAppUiState.attendance.count { it.status.equals("PRESENT", true) } }
+    }
+
+    val attendancePercent by remember(totalAttendance, presentAttendance) {
+        derivedStateOf {
+            if (totalAttendance > 0) (presentAttendance.toFloat() / totalAttendance) * 100f else 0f
+        }
+    }
+
+
+    val formatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd") }
+
+    val presentDatesLocal by remember(mainAppUiState.attendance) {
+        derivedStateOf {
+            mainAppUiState.attendance.asSequence()
+                .filter { it.status.equals("PRESENT", true) }
+                .mapNotNull { runCatching { LocalDate.parse(it.date, formatter) }.getOrNull() }
+                .toList()
+        }
+    }
+
+
+
+    val formatterTime = remember { DateTimeFormatter.ofPattern("HH:mm") }
+
+    val sortedEntries by remember(mainAppUiState.timeTableEntries, selectedDay.value) {
+        derivedStateOf {
+            mainAppUiState.timeTableEntries
+                .filter { it.day.equals(selectedDay.value, ignoreCase = true) }
+                .sortedBy { entry ->
+                    runCatching {
+                        val start = entry.timing.substringBefore("-").trim()
+                        LocalTime.parse(start, formatterTime)
+                    }.getOrElse { LocalTime.MAX }
+                }
+        }
+    }
+
+    val classesCompleted by remember(sortedEntries) {
+        derivedStateOf {
+            val now = LocalTime.now()
+            sortedEntries.count { entry ->
+                val endStr = entry.timing.substringAfter("-", "").trim()
+                val end = runCatching { LocalTime.parse(endStr, formatterTime) }.getOrNull()
+                end != null && now.isAfter(end)
             }
         }
-    Log.d("timetable",sortedEntries.firstOrNull()?.subject ?:"Nu")
+    }
 
 
         LazyColumn (modifier = Modifier
@@ -113,7 +149,7 @@ fun HomeScreen(innerPadding: PaddingValues,
                                 "Sunday", "Monday", "Tuesday", "Wednesday",
                                 "Thursday", "Friday", "Saturday"
                             ),
-                            selectedOption = selectedDay
+                            selectedOption = selectedDay.value
                         ) { option ->
                             selectedDay.value = option
                         }
@@ -165,31 +201,9 @@ fun HomeScreen(innerPadding: PaddingValues,
             }
             item {
                 Column {
-                    var classesCompleted = 0
-                    sortedEntries
-                        .forEach { entry ->
-                            val idx = entry.timing.indexOf("-")
-                            if (idx != -1) {
-                                val endTimeStr = entry.timing.substring(idx + 1).trim() // "10:30"
-                                try {
-                                    val endTime = LocalTime.parse(endTimeStr, formatterTime)
-                                    val currTime = LocalTime.now()
-
-                                    if (currTime.isAfter(endTime)) {
-                                        classesCompleted++
-                                    }
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                }
-                            }
-                        }
                     ClassCountDown(classesCompleted = classesCompleted,
                         totalClasses = sortedEntries.size)
-                    AttendanceAlert(attendance =
-                        if (dates.size!=0){
-                            (presentDatesLocal.size.toFloat()/dates.size.toFloat())*100
-                        }
-                        else 0f
+                    AttendanceAlert(attendance = attendancePercent
                         ,
                         onClick = {
                             selectedIndexSend(1)

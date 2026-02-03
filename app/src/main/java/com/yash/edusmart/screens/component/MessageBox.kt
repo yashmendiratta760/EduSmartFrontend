@@ -117,20 +117,9 @@ fun Messagebox(modifier: Modifier=Modifier,
             }
             else if(imageUri!=null)
             {
-                Log.d("uri",imageUri)
-                val jsonObject = JSONObject(imageUri)
-                val fixedImageUri = jsonObject.getString("url")
-//                AsyncImage(
-//
-//                    model =  fixedImageUri,
-//                    contentDescription = "Sent Image",
-//                    modifier = modifier
-//                        .size(200.dp)
-//                        .clip(RoundedCornerShape(8.dp))
-//                        .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
-//                    placeholder = painterResource(R.drawable.cupcake),
-//                    error = painterResource(R.drawable.ic_launcher_background)
-//                )
+
+
+
             }
         }
     }
@@ -142,15 +131,6 @@ fun Messagebox(modifier: Modifier=Modifier,
                     .background(Color.Black)
                     .clickable { isImageOpen = false }
             ) {
-                val jsonObject = JSONObject(imageUri)
-                val fixedImageUri = jsonObject.getString("url")
-//                AsyncImage(
-//                    model = fixedImageUri,
-//                    contentDescription = "Full Image",
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .padding(16.dp)
-//                )
             }
         }
     }

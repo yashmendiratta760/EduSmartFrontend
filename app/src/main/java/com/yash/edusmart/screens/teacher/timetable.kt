@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -43,11 +44,12 @@ fun TimeTableTeacher(innerPadding: PaddingValues,
                      mainAppUiState: MainAppUiState,
                      mainAppViewModel: MainAppViewModel,
                      userUiState: UserUiState){
-    val formatterTime = DateTimeFormatter.ofPattern("HH:mm")
+    val formatterTime = remember { DateTimeFormatter.ofPattern("HH:mm") }
 //    LaunchedEffect(mainAppUiState.timeTableTeacher) {
 //        mainAppViewModel.getTimeTableTeacher(userUiState.email)
 //    }
-    val sortedEntries = mainAppUiState.timeTableTeacher
+    val sortedEntries = remember(mainAppUiState.timeTableTeacher) {
+        mainAppUiState.timeTableTeacher
         .filter { it.day.uppercase() == selectedDay.value.uppercase() }
         .sortedBy { entry ->
             try {
@@ -57,6 +59,7 @@ fun TimeTableTeacher(innerPadding: PaddingValues,
                 LocalTime.MAX // fallback: put unparsable timings at the end
             }
         }.distinct()
+    }
 
     LazyColumn (modifier = Modifier
         .padding(innerPadding)
@@ -88,7 +91,7 @@ fun TimeTableTeacher(innerPadding: PaddingValues,
                             "Sunday", "Monday", "Tuesday", "Wednesday",
                             "Thursday", "Friday", "Saturday"
                         ),
-                        selectedOption = selectedDay
+                        selectedOption = selectedDay.value
                     ) { option ->
                         selectedDay.value = option
                     }

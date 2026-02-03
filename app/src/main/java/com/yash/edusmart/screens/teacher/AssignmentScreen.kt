@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,10 +70,15 @@ fun AssignmentScreen(innerPadding: PaddingValues,
 
     val today = LocalDate.now()
 
-    val filteredStudentAssignments = assigns.filter { a ->
-        val deadlineDate = a.deadline.toLocalDate()
-        !deadlineDate.isBefore(today)   // ✅ today OR future
+    val filteredStudentAssignments by remember(assigns) {
+        derivedStateOf {
+            assigns.filter { a ->
+                val deadlineDate = a.deadline.toLocalDate()
+                !deadlineDate.isBefore(today)   // ✅ today OR future
+            }
+        }
     }
+
     Box(modifier = Modifier
         .padding(innerPadding)
         .fillMaxSize()) {

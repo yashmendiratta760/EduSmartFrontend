@@ -38,7 +38,11 @@ fun AssignmentUploadDataScreen(
 ) {
     var description by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
-    val branches = mainAppUiState.branch.distinct()
+    val branches by remember(mainAppUiState.branch){
+        derivedStateOf {
+            mainAppUiState.branch.distinct()
+        }
+    }
     val batch = remember { mutableStateOf("Select batch") }
     val sem = remember { mutableStateOf("Select Semester") }
 
@@ -102,14 +106,14 @@ fun AssignmentUploadDataScreen(
 
             CustomDropdownMenu(
                 options = branches,
-                selectedOption = batch
+                selectedOption = batch.value
             ) { b ->
                 batch.value = b
             }
 
             CustomDropdownMenu(
                 options = listOf("1","2","3","4","5","6","7","8"),
-                selectedOption = sem
+                selectedOption = sem.value
             ) { s ->
                 sem.value = s
             }

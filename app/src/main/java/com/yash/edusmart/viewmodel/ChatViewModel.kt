@@ -65,6 +65,7 @@ class ChatViewModel @Inject constructor(
 
 
 
+
     fun showToast(message: String) {
         viewModelScope.launch(Dispatchers.Main.immediate) {
             _toastEvent.emit(message)
@@ -78,13 +79,20 @@ class ChatViewModel @Inject constructor(
         contextRepo.getUserType()      // Flow<Boolean?>
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    val email: StateFlow<String?> =
+        contextRepo.getEmail()        // Flow<Boolean?>
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
 
     init {
         viewModelScope.launch {
-            combine(userType, isLoggedIn) { type, logged -> type to logged }
+            combine(userType, isLoggedIn, email) { type, logged, em ->
+                Triple(type, logged, em)
+            }
                 .distinctUntilChanged()
-                .collect { (type, logged) ->
+                .collect { (type, logged, em) ->
                     if (logged != true) return@collect
+                    if (type.isNullOrBlank() || em.isNullOrBlank()) return@collect
 
                     if (type == "STUDENT") {
                         val branch = contextRepo.getBranch().filterNotNull().first()
@@ -92,11 +100,12 @@ class ChatViewModel @Inject constructor(
                         _uiState.update { it.copy(branch = branch, sem = sem) }
                         start("$branch $sem")
                     } else if (type == "TEACHER") {
-                        startTeacher()
+                        startTeacher(em)   // ✅ pass String email
                     }
                 }
         }
     }
+
 
 
     val messages = chatLocalDbRepo.getMessages()
@@ -107,7 +116,8 @@ class ChatViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    suspend fun startTeacher() {
+
+    suspend fun startTeacher(email: String) {
         val token = contextRepo.getToken().firstOrNull().orEmpty()
         if (token.isBlank()) return
 
@@ -116,6 +126,7 @@ class ChatViewModel @Inject constructor(
             socketConnected = true
         }
         isConnected = true
+
 
         ensurePrivateSubscribed() // ✅ only one place
     }
@@ -314,6 +325,7 @@ class ChatViewModel @Inject constructor(
 
                 val localList = serverList.mapNotNull { m ->
                     val sid = m.id ?: return@mapNotNull null
+
                     ChatEntries(
                         id = sid,                  // ✅ server id as PK
                         message = m.msg,
@@ -382,6 +394,84 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
+
+    fun syncTeacherGroupHistory(branch: String, sem: String,email: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val groupId = "$branch $sem"
+
+                val res = mainAppApi.getGroupMessagesTeacher(branch, sem)
+                if (!res.isSuccessful) return@launch
+
+                val serverList = res.body().orEmpty().sortedBy { it.timeStamp }
+                val serverIds = serverList.mapNotNull { it.id }
+                if (serverIds.isEmpty()) return@launch
+
+                val localList = serverList.mapNotNull { m ->
+                    val sid = m.id ?: return@mapNotNull null
+                    val mine = m.sender == email
+
+                    ChatEntries(
+                        id = sid,                  // ✅ server id as PK
+                        message = m.msg,
+                        isSent = mine,             // ✅ teacher SENT messages
+                        sender = m.sender,
+                        receiver = groupId,        // group thread key
+                        timeStamp = m.timeStamp
+                    )
+                }
+
+                chatLocalDbRepo.upsertAll(localList)
+                chatLocalDbRepo.deleteNotInServer(groupId, serverIds)
+
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "syncTeacherGroupHistory failed", e)
+            }
+        }
+    }
+
+    fun syncTeacherPrivateHistory(otherEmail: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val myEmail = contextRepo.getEmail().filterNotNull().first()
+
+                val res = mainAppApi.getPrivateConversationTeacher(
+                    email = myEmail,
+                    receiverEmail = otherEmail
+                )
+                if (!res.isSuccessful) return@launch
+
+                val serverList = res.body().orEmpty()
+                val serverIds = serverList.mapNotNull { it.id }
+                if (serverIds.isEmpty()) return@launch
+
+                val localList = serverList.mapNotNull { m ->
+                    val sid = m.id ?: return@mapNotNull null
+                    val mine = m.sender == myEmail
+
+                    ChatEntries(
+                        id = sid,                 // server id as PK
+                        message = m.msg,
+                        isSent = mine,            // ✅ sender-based
+                        sender = m.sender,
+                        receiver = m.receiver,
+                        timeStamp = m.timeStamp
+                    )
+                }
+
+                chatLocalDbRepo.upsertAll(localList)
+
+                // delete stale messages for both sides
+                chatLocalDbRepo.deleteNotInServer(otherEmail, serverIds)
+                chatLocalDbRepo.deleteNotInServer(myEmail, serverIds)
+
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "syncTeacherPrivateHistory failed", e)
+            }
+        }
+    }
+
+
 
 
 

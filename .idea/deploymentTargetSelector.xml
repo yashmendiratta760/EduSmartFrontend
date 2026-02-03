@@ -3,8 +3,8 @@
   <component name="deploymentTargetSelector">
     <selectionStates>
       <SelectionState runConfigName="app">
-        <option name="selectionMode" value="DIALOG" />
-        <DropdownSelection timestamp="2026-01-26T07:14:49.414388713Z">
+        <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2026-02-03T10:26:03.123591809Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=FEMR95DERWXOHUAI" />
@@ -15,12 +15,12 @@
           <targets>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="PhysicalDevice" identifier="serial=FEMR95DERWXOHUAI" />
+                <DeviceId pluginId="LocalEmulator" identifier="path=/home/yash/.android/avd/Medium_Phone_API_36.0_2.avd" />
               </handle>
             </Target>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="LocalEmulator" identifier="path=/home/yash/.android/avd/Medium_Phone_API_36.0_2.avd" />
+                <DeviceId pluginId="PhysicalDevice" identifier="serial=FEMR95DERWXOHUAI" />
               </handle>
             </Target>
           </targets>

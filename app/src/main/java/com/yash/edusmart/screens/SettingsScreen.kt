@@ -76,20 +76,8 @@ fun SettingsScreen(innerPadding: PaddingValues,
 
 
 
-    val context = LocalContext.current
 
     val coroutineScope = rememberCoroutineScope()
-
-    val imageUri = remember { mutableStateOf<Uri?>(null) }
-
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        imageUri.value = uri
-    }
-
-
-
 
 
     val accountData:List<Penta<String, String, ImageVector, Color, () -> Unit>>  = listOf(
@@ -160,7 +148,7 @@ fun SettingsScreen(innerPadding: PaddingValues,
                             .size(35.dp)
                             .clickable(
                                 onClick = {
-                                    launcher.launch("image/*")
+//                                    launcher.launch("image/*")
                                 }
                             )
                             .background(color = Color.Blue.copy(alpha = 0.6f),

@@ -99,9 +99,7 @@ fun MainLogic(navController: NavHostController,
             mainAppViewModel.getAttendance(userUiState.email)
         }
     }
-    Log.d("hITT","HITT")
     LaunchedEffect(mainAppUiState.callComplete,mainAppUiState.timeTableEntries ){
-        Log.d("timetableT",studentUiState.branch + studentUiState.semester)
         mainAppViewModel.getTimeTableEntries(studentUiState.branch, studentUiState.semester)
         mainAppViewModel.setFalseCallComplete()
 

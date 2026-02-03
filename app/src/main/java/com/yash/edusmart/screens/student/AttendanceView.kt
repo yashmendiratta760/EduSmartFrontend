@@ -22,6 +22,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -54,7 +55,6 @@ fun AttendanceView(navController: NavHostController,
                    studentViewModel: StudentViewModel,
                    userUiState: UserUiState,
                    mainAppUiState: MainAppUiState){
-    val context = LocalContext.current
 
 
     val options by remember(mainAppUiState.subjectList) {
@@ -66,34 +66,53 @@ fun AttendanceView(navController: NavHostController,
     }
 
 
-    val selectedOption = remember { mutableStateOf(studentUiState.selectedSubject) }
+    var selectedOption by rememberSaveable { mutableStateOf(studentUiState.selectedSubject) }
 
-    LaunchedEffect(selectedOption.value){
-        studentViewModel.setSubject(selectedOption.value)
+    LaunchedEffect(studentUiState.selectedSubject) {
+        selectedOption = studentUiState.selectedSubject
     }
 
-    val dates = mainAppUiState.attendance.map { Triple(it.date, it.status, it.subject) }
 
-    val filteredAttendance:List<AttendanceDTO> = if (selectedOption.value == "Select Subject") {
-        emptyList()
-    } else {
-        mainAppUiState.attendance.filter { it.subject == selectedOption.value }
+    LaunchedEffect(selectedOption){
+        studentViewModel.setSubject(selectedOption)
     }
-    Log.d("ATTENDANCE",filteredAttendance.toString())
-    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-    val presentDatesLocal: List<LocalDate> = filteredAttendance
-        .filter { it.status.equals("PRESENT", ignoreCase = true) }
-        .map { LocalDate.parse(it.date, formatter) }
 
-    val absentDatesLocal: List<LocalDate> = filteredAttendance
-        .filter { it.status.equals("ABSENT", ignoreCase = true) }
-        .map { LocalDate.parse(it.date, formatter) }
+    val filteredAttendance by remember(mainAppUiState.attendance, selectedOption) {
+        derivedStateOf {
+            if (selectedOption == "Select Subject") emptyList()
+            else mainAppUiState.attendance.filter { it.subject == selectedOption }
+        }
+    }
 
-// If HolidayDTO.date is "yyyy-MM-dd" string:
+    val formatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd") }
 
-    val holidayDatesLocal: List<LocalDate> =
-        studentUiState.holidays.map { LocalDate.parse(it.date, formatter) }
+    val presentDatesLocal by remember(filteredAttendance) {
+        derivedStateOf {
+            filteredAttendance.asSequence()
+                .filter { it.status.equals("PRESENT", true) }
+                .mapNotNull { runCatching { LocalDate.parse(it.date, formatter) }.getOrNull() }
+                .toList()
+        }
+    }
+
+    val absentDatesLocal by remember(filteredAttendance) {
+        derivedStateOf {
+            filteredAttendance.asSequence()
+                .filter { it.status.equals("ABSENT", true) }
+                .mapNotNull { runCatching { LocalDate.parse(it.date, formatter) }.getOrNull() }
+                .toList()
+        }
+    }
+
+    val holidayDatesLocal by remember(studentUiState.holidays) {
+        derivedStateOf {
+            studentUiState.holidays.mapNotNull {
+                runCatching { LocalDate.parse(it.date, formatter) }.getOrNull()
+            }
+        }
+    }
+
 
 
 
@@ -153,14 +172,14 @@ fun AttendanceView(navController: NavHostController,
                 top = 10.dp, bottom = 10.dp)) {
                 CustomDropdownMenu(options=options,
                     selectedOption = selectedOption){option->
-                    selectedOption.value = option
+                    selectedOption = option
                 }
             }
 
 
         }
         item {
-            if (selectedOption.value!="Select Subject") {
+            if (selectedOption!="Select Subject") {
                 Box(
                     modifier = Modifier
                         .padding(20.dp)
@@ -174,6 +193,10 @@ fun AttendanceView(navController: NavHostController,
                             shape = RoundedCornerShape(30.dp)
                         )
                 ){
+                    val percentage =
+                        if (filteredAttendance.isNotEmpty())
+                            (presentDatesLocal.size.toFloat() / filteredAttendance.size.toFloat()) * 100f
+                        else 0f
                     Row(modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween) {
                         Column(modifier = Modifier.padding(20.dp),
@@ -182,7 +205,7 @@ fun AttendanceView(navController: NavHostController,
                                 fontSize = 12.sp,
                                 color = Color(0x9DFFFBFB),
                                 modifier = Modifier.padding(bottom = 10.dp))
-                            Text("${String.format("%.2f",(presentDatesLocal.size.toFloat() / filteredAttendance.size.toFloat())*100)}%", fontSize = 35.sp)
+                            Text(String.format("%.2f%%", percentage), fontSize = 35.sp)
                         }
                         Column(modifier = Modifier.padding(22.dp),
                             verticalArrangement = Arrangement.SpaceBetween) {

@@ -55,6 +55,7 @@ import com.yash.edusmart.viewmodel.StudentUiState
 import com.yash.edusmart.viewmodel.UserUiState
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
+import androidx.compose.runtime.derivedStateOf
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -72,43 +73,58 @@ fun ChatScreen(innerPadding: PaddingValues,
                userUiState: UserUiState,
                studentUiState: StudentUiState){
 
-    val branches = mainAppUiState.branch.distinct()
-    val context = LocalContext.current
+    val branches by remember(mainAppUiState.branch){
+        derivedStateOf {
+            mainAppUiState.branch.distinct()
+        }
+    }
     var studentSelected by remember { mutableIntStateOf(0) }
     var receiver by remember { mutableStateOf("") }
     var typeMsg by remember { mutableStateOf("") }
-    val myEmail = userUiState.email
+    val myEmail by remember(userUiState.email){
+        derivedStateOf {
+            userUiState.email
+        }
+    }
 
 
-    val msgs by remember(receiver) {
-        chatViewModel.messages.map { list ->
+    val allMessages by chatViewModel.messages.collectAsState(initial = emptyList())
+
+    val msgs by remember(allMessages, receiver, myEmail) {
+        derivedStateOf {
             if (receiver.isBlank()) emptyList()
-            else list.filter {
+            else allMessages.filter {
                 (it.sender == receiver && it.receiver == myEmail) ||
                         (it.sender == myEmail && it.receiver == receiver)
             }
         }
-    }.collectAsState(initial = emptyList())
-    val msgsP by remember(studentUiState.branch,selectedBatch.value,selectedSemester.value,studentUiState.semester) {
-        chatViewModel.messages.map { list ->
-            list.filter {
-                (it.receiver== if(isStudent) studentUiState.branch+" "+studentUiState.semester else selectedBatch.value+" "+selectedSemester.value)
-            }
-        }
-    }.collectAsState(initial = emptyList())
+    }
+
+    val groupId = if (isStudent)
+        "${studentUiState.branch} ${studentUiState.semester}"
+    else
+        "${selectedBatch.value} ${selectedSemester.value}"
+
+    val msgsP by remember(allMessages, groupId) {
+        derivedStateOf { allMessages.filter { it.receiver == groupId } }
+    }
+
 
 
     val listState = rememberLazyListState()
-    LaunchedEffect(msgs.size) {
-        if (msgs.isNotEmpty()) {
-            listState.animateScrollToItem(msgs.size-1)
+    val activeSize =
+        if (selectedChatType.value.contains("Group")) msgsP.size else msgs.size
+
+    LaunchedEffect(activeSize, selectedChatType.value, studentSelected) {
+        val shouldScroll =
+            selectedChatType.value.contains("Group") ||
+                    (selectedChatType.value == "Private Chat" && studentSelected == 1)
+
+        if (shouldScroll && activeSize > 0) {
+            listState.scrollToItem(0)   // index 0 for reverseLayout=true
         }
     }
-    LaunchedEffect(msgsP.size) {
-        if (msgsP.isNotEmpty()) {
-            listState.animateScrollToItem(msgsP.size-1)
-        }
-    }
+
 
 
 
@@ -123,7 +139,6 @@ fun ChatScreen(innerPadding: PaddingValues,
             }
         }
     }
-
 
     if(isStudent){
         LaunchedEffect(selectedChatType.value) {
@@ -167,17 +182,6 @@ fun ChatScreen(innerPadding: PaddingValues,
         }
     }
 
-    if(!isStudent){
-        LaunchedEffect(selectedBatch.value) {
-            if(selectedBatch.value!="Select Branch"){
-                chatViewModel.start(groupId = selectedBatch.value)
-            }
-        }
-    }
-
-
-
-
 
 
 
@@ -194,13 +198,13 @@ fun ChatScreen(innerPadding: PaddingValues,
             ) {
                 CustomDropdownMenu(
                     options = branches,
-                    selectedOption = selectedBatch,
+                    selectedOption = selectedBatch.value,
                     onOptionSelected = { selectedBatch.value = it }
                 )
 
                 CustomDropdownMenu(
                     options = listOf("1","2","3","4","5","6","7","8"),
-                    selectedOption = selectedSemester,
+                    selectedOption = selectedSemester.value,
                     onOptionSelected = { selectedSemester.value = it }
                 )
             }
@@ -214,7 +218,7 @@ fun ChatScreen(innerPadding: PaddingValues,
                     )
                 else
                     listOf("Group Chat", "Private Chat"),
-                selectedOption = selectedChatType,
+                selectedOption = selectedChatType.value,
                 onOptionSelected = { selectedChatType.value = it }
             )
 
@@ -229,9 +233,10 @@ fun ChatScreen(innerPadding: PaddingValues,
             if(studentSelected==1) {
                 LazyColumn(
                     modifier = Modifier
-                        .weight(1f), state = listState
+                        .weight(1f), state = listState,
+                    reverseLayout = true
                 ) {
-                    items(msgs.reversed()) { msg ->
+                    items(msgs) { msg ->
                         Messagebox(
                             message = msg.message,
                             isSent = msg.isSent,
@@ -253,7 +258,8 @@ fun ChatScreen(innerPadding: PaddingValues,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(onClick = {
-                                    chatViewModel.syncPrivateHistory(st.email)
+                                    if(isStudent)  chatViewModel.syncPrivateHistory(st.email)
+                                    else chatViewModel.syncTeacherPrivateHistory(st.email)
                                     studentSelected = 1
                                     receiver = st.email
                                     canNavigateBack(true)
@@ -269,7 +275,8 @@ fun ChatScreen(innerPadding: PaddingValues,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(onClick = {
-                                    chatViewModel.syncPrivateHistory(st.email)
+                                    if(isStudent) chatViewModel.syncPrivateHistory(st.email)
+                                    else chatViewModel.syncTeacherPrivateHistory(st.email)
                                     studentSelected = 1
                                     receiver = st.email
                                     canNavigateBack(true)
@@ -310,11 +317,13 @@ fun ChatScreen(innerPadding: PaddingValues,
                 }
             )
         }
-        else if(!isStudent && selectedChatType.value=="Group Chat" && selectedBatch.value!="Select Branch" ||
+        else if(!isStudent && selectedChatType.value=="Group Chat" && selectedBatch.value!="Select Branch" && selectedSemester.value!="Select Semester"||
             isStudent && selectedChatType.value=="Group Chat(Official)"){
+            chatViewModel.syncTeacherGroupHistory(selectedBatch.value,selectedSemester.value,myEmail)
             LazyColumn(modifier = Modifier
-                .weight(1f), state = listState) {
-                    items(msgsP.reversed()){msg->
+                .weight(1f), state = listState,
+                reverseLayout = true) {
+                    items(msgsP){msg->
                         Messagebox(
                             message = msg.message,
                             isSent = msg.isSent,
@@ -358,53 +367,3 @@ fun ChatScreen(innerPadding: PaddingValues,
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

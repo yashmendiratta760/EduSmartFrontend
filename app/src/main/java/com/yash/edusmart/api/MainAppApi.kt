@@ -103,9 +103,8 @@ interface MainAppApi
         @Body chatEntity: ChatEntity
     ): Response<String>
 
-    @GET("/teacher/getMessagesByEmailAndBranchAndSem")
+    @GET("/teacher/getMessagesByBranchAndSem")
     suspend fun getGroupMessagesTeacher(
-        @Query("email") email: String,
         @Query("branch") branch: String,
         @Query("sem") sem: String
     ): Response<List<ChatEntity>>

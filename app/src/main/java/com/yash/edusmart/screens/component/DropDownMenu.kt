@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun CustomDropdownMenu(
     options: List<String>,
-    selectedOption: MutableState<String>,
+    selectedOption: String,
     onOptionSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -44,7 +44,7 @@ fun CustomDropdownMenu(
         onExpandedChange = { expanded = !expanded }
     ) {
         TextField(
-            value = selectedOption.value,
+            value = selectedOption,
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },

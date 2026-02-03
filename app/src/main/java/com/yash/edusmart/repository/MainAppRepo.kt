@@ -72,7 +72,6 @@ interface MainAppRepo
     /* ---------------- TEACHER ---------------- */
 
     suspend fun getTeacherGroupMessages(
-        email: String,
         branch: String,
         sem: String
     ): Response<List<ChatEntity>>
@@ -183,11 +182,10 @@ class MainAppRepoImpl @Inject constructor(private val mainAppApi: MainAppApi): M
     /* ---------------- TEACHER ---------------- */
 
     override suspend fun getTeacherGroupMessages(
-        email: String,
         branch: String,
         sem: String
     ): Response<List<ChatEntity>> {
-        return mainAppApi.getGroupMessagesTeacher(email, branch, sem)
+        return mainAppApi.getGroupMessagesTeacher( branch, sem)
     }
 
     override suspend fun getTeacherPrivateConversation(

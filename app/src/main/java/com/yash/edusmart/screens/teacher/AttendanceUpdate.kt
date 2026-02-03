@@ -56,12 +56,12 @@ import java.time.format.DateTimeFormatter
 fun AttendanceUpdate(mainAppUiState: MainAppUiState,
                      mainAppViewModel: MainAppViewModel,
                      navController: NavHostController){
-    val context = LocalContext.current
+
     val branchSelected = remember { mutableStateOf("Select Branch") }
     val semSelected = remember { mutableStateOf("Select Semester") }
     val dateSelected = remember { mutableStateOf("") }
     val selectedTiming = remember { mutableStateOf("Select Time Slot") }
-    val formatter = DateTimeFormatter.ISO_LOCAL_DATE
+    val formatter = remember { DateTimeFormatter.ISO_LOCAL_DATE }
     val selectedDayName by remember(dateSelected.value) {
         derivedStateOf {
             val date = if (dateSelected.value.isNotEmpty())
@@ -107,7 +107,11 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
         }
     }
 
-    val branches = listOf("CSE","IT","ECE")
+    val branches by remember(mainAppUiState.branch){
+        derivedStateOf {
+            mainAppUiState.branch.distinct()
+        }
+    }
     val semester = listOf("1","2","3","4","5","6","7","8")
 
     Scaffold(modifier = Modifier.fillMaxSize(),
@@ -128,13 +132,13 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
             item {
                 CustomDropdownMenu(
                     options = branches,
-                    selectedOption = branchSelected
+                    selectedOption = branchSelected.value
                 ) { selectedOpt ->
                     branchSelected.value = selectedOpt
                 }
                 CustomDropdownMenu(
                     options = semester,
-                    selectedOption = semSelected
+                    selectedOption = semSelected.value
                 ) { selectedOpt ->
                     semSelected.value = selectedOpt
                 }
@@ -142,7 +146,7 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
                 DatePickerMenu(dateSelected)
                 CustomDropdownMenu(
                     options = timeTableEntriesTimings,
-                    selectedOption = selectedTiming
+                    selectedOption = selectedTiming.value
                 ) { selectedOpt ->
                     selectedTiming.value = selectedOpt
                 }
@@ -153,13 +157,13 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
                         "$name ($email)"
                     },
 
-                    selectedOption = selectedStudentName
+                    selectedOption = selectedStudentName.value
                 ) { name ->
                     selectedStudentName.value = name
                 }
                 CustomDropdownMenu(
                     options = listOf("PRESENT", "ABSENT"),
-                    selectedOption = selectedStatus
+                    selectedOption = selectedStatus.value
                 ) { status ->
                     selectedStatus.value = status
                 }
