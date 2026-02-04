@@ -2,6 +2,7 @@ package com.yash.edusmart.screens.teacher
 
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +57,12 @@ import java.time.format.DateTimeFormatter
 fun AttendanceUpdate(mainAppUiState: MainAppUiState,
                      mainAppViewModel: MainAppViewModel,
                      navController: NavHostController){
+    val context = LocalContext.current
+    LaunchedEffect(mainAppViewModel) {
+        mainAppViewModel.toastEvent.collect {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val branchSelected = remember { mutableStateOf("Select Branch") }
     val semSelected = remember { mutableStateOf("Select Semester") }
@@ -67,15 +74,16 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
             val date = if (dateSelected.value.isNotEmpty())
                 LocalDate.parse(dateSelected.value, formatter)
             else LocalDate.now()
-            date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() } // "Monday"
+            date.dayOfWeek.name.uppercase()// "Monday"
         }
     }
-    val timeTableEntriesTimings by remember(selectedDayName) {
+    val timeTableEntriesTimings by remember(selectedDayName, mainAppUiState.timeTableEntries) {
         derivedStateOf {
             mainAppUiState.timeTableEntries
                 .filter { it.day.equals(selectedDayName, ignoreCase = true) }
                 .sortedBy { it.timing }
                 .map { it.timing }
+                .distinct()
         }
     }
     val selectedStudentName = remember { mutableStateOf("Select Name") }
@@ -83,11 +91,19 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
     val selectedStatus = remember { mutableStateOf("Select Attendance Status") }
 
 
-    LaunchedEffect(branchSelected.value,semSelected.value){
-        if(branchSelected.value != "Select Branch" && semSelected.value != "Select Semester"){
-            mainAppViewModel.getStudentListTeacherAttendance(branch = branchSelected.value, semester = semSelected.value)
-        }
+    LaunchedEffect(branchSelected.value, semSelected.value) {
+        Log.d("HITT",mainAppUiState.timeTableEntries.toString())
+        val semInt = semSelected.value.toIntOrNull()
+        if (branchSelected.value == "Select Branch" || semInt == null) return@LaunchedEffect
+
+        mainAppViewModel.getStudentListTeacherAttendance(branchSelected.value, semSelected.value)
+
+        mainAppViewModel.getTimeTableByBranchAndSemesterTeacher(branchSelected.value, semInt)
+        mainAppViewModel.getTimeTableEntries(branchSelected.value, semInt)
+
+        Log.d("HITT",mainAppUiState.timeTableEntries.toString())
     }
+
     val attendanceListBool = remember { mutableStateListOf<Pair<String,String>>() }
     LaunchedEffect(mainAppUiState.studentDataAttendance) {
         attendanceListBool.clear()
@@ -98,7 +114,11 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
         )
     }
 
-    val subjectName by remember(selectedTiming.value, selectedDayName) {
+    val subjectName by remember(
+        selectedTiming.value,
+        selectedDayName,
+        mainAppUiState.timeTableEntries
+    ) {
         derivedStateOf {
             mainAppUiState.timeTableEntries.firstOrNull {
                 it.timing == selectedTiming.value &&

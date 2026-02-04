@@ -56,6 +56,7 @@ import com.yash.edusmart.viewmodel.UserUiState
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.runtime.derivedStateOf
+import com.yash.edusmart.screens.component.LoadingIcon
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -224,10 +225,6 @@ fun ChatScreen(innerPadding: PaddingValues,
 
 
 
-
-
-
-
         if(!isStudent && selectedChatType.value=="Private Chat" && selectedBatch.value!="Select Branch" ||
             isStudent && selectedChatType.value=="Private Chat"){
             if(studentSelected==1) {
@@ -249,45 +246,62 @@ fun ChatScreen(innerPadding: PaddingValues,
 
                 }
             }else{
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                ) {
-                    items(mainAppUiState.studentDataChat) { st ->
-                        Row(verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(onClick = {
-                                    if(isStudent)  chatViewModel.syncPrivateHistory(st.email)
-                                    else chatViewModel.syncTeacherPrivateHistory(st.email)
-                                    studentSelected = 1
-                                    receiver = st.email
-                                    canNavigateBack(true)
-                                })){
-                            Image(painter = painterResource(R.drawable.google_logo),
-                                contentDescription = "",
-                                modifier = Modifier.size(70.dp))
-                            Text(text = st.name)
-                        }
+                if (mainAppUiState.isChatListLoading) {
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LoadingIcon()
                     }
-                    items(mainAppUiState.teacher) { st ->
-                        Row(verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(onClick = {
-                                    if(isStudent) chatViewModel.syncPrivateHistory(st.email)
-                                    else chatViewModel.syncTeacherPrivateHistory(st.email)
-                                    studentSelected = 1
-                                    receiver = st.email
-                                    canNavigateBack(true)
-                                })){
-                            Image(painter = painterResource(R.drawable.google_logo),
-                                contentDescription = "",
-                                modifier = Modifier.size(70.dp))
-                            Text(text = st.name)
+                }else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                    ) {
+                        items(mainAppUiState.studentDataChat) { st ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(onClick = {
+                                        if (isStudent) chatViewModel.syncPrivateHistory(st.email)
+                                        else chatViewModel.syncTeacherPrivateHistory(st.email)
+                                        studentSelected = 1
+                                        receiver = st.email
+                                        canNavigateBack(true)
+                                    })
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.google_logo),
+                                    contentDescription = "",
+                                    modifier = Modifier.size(70.dp)
+                                )
+                                Text(text = st.name)
+                            }
                         }
-                    }
+                        items(mainAppUiState.teacher) { st ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(onClick = {
+                                        if (isStudent) chatViewModel.syncPrivateHistory(st.email)
+                                        else chatViewModel.syncTeacherPrivateHistory(st.email)
+                                        studentSelected = 1
+                                        receiver = st.email
+                                        canNavigateBack(true)
+                                    })
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.google_logo),
+                                    contentDescription = "",
+                                    modifier = Modifier.size(70.dp)
+                                )
+                                Text(text = st.name)
+                            }
+                        }
 
+                    }
                 }
             }
             MessageSendBox(

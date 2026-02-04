@@ -249,7 +249,6 @@ class ChatViewModel @Inject constructor(
     fun sendAssignment(message: AssignmentDTO, groupId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                Log.e("HIT","hit")
                 SocketService.sendAssignment(message = message, groupId = groupId)
 
                 withContext(Dispatchers.Main) {

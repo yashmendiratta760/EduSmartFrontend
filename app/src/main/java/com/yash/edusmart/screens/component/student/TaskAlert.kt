@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -52,7 +51,6 @@ fun TaskAlert(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(250.dp)
             .padding(20.dp)
             .background(
                 brush = Brush.linearGradient(
@@ -79,7 +77,7 @@ fun TaskAlert(
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(20.dp)
 
         ) {
@@ -104,7 +102,6 @@ fun TaskAlert(
                 color = Color.White,
                 modifier = Modifier
                     .padding(top = 10.dp)
-                    .weight(1f)
             )
 
             if (isStudent) {

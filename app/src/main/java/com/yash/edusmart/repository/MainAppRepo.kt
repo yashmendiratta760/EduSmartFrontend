@@ -39,14 +39,16 @@ interface MainAppRepo
 
     suspend fun getTimeTableByBranchAndSemesterTeacher(branch: String,semester: String): Response<List<TimeTableEntry>>
 
-    suspend fun getAllAssignTeacher(): Response<List<AssignmentGetDTO>>
+    suspend fun getAllAssignTeacher(branch: String,sem: String): Response<List<AssignmentGetDTO>>
 
     suspend fun markAssignment(
         idAss: Long,
         enroll: String
     ): Response<String>
 
-    suspend fun getAllAssign(): Response<List<AssignmentStudent>>
+    suspend fun getAllAssign(
+        branch: String,sem: String
+    ): Response<List<AssignmentStudent>>
 
     suspend fun getHolidays(): Response<List<HolidayEntity>>
 
@@ -131,8 +133,8 @@ class MainAppRepoImpl @Inject constructor(private val mainAppApi: MainAppApi): M
         return mainAppApi.getTimeTableByBranchAndSemesterTeacher(branch,semester)
     }
 
-    override suspend fun getAllAssignTeacher(): Response<List<AssignmentGetDTO>> {
-        return mainAppApi.getAllAssignTeacher()
+    override suspend fun getAllAssignTeacher(branch: String,sem: String): Response<List<AssignmentGetDTO>> {
+        return mainAppApi.getAllAssignTeacher(branch,sem)
     }
 
     override suspend fun markAssignment(
@@ -142,8 +144,8 @@ class MainAppRepoImpl @Inject constructor(private val mainAppApi: MainAppApi): M
         return mainAppApi.markAssignment(idAss,enroll)
     }
 
-    override suspend fun getAllAssign(): Response<List<AssignmentStudent>> {
-        return mainAppApi.getAllAssign()
+    override suspend fun getAllAssign(branch: String,sem: String): Response<List<AssignmentStudent>> {
+        return mainAppApi.getAllAssign(branch,sem)
     }
 
     override suspend fun getHolidays(): Response<List<HolidayEntity>> {

@@ -19,5 +19,7 @@ data class MainAppUiState(
     val branch:List<String> = emptyList(),
     val assignments:List<AssignmentGetDTO> = emptyList(),
     val timeTableTeacher:List<TimeTableEntry> = emptyList(),
-    val teacher:List<TeacherDTO> = emptyList()
+    val teacher:List<TeacherDTO> = emptyList(),
+    val isLoading: Boolean = false,
+    val isChatListLoading: Boolean=false
 )

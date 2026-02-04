@@ -7,22 +7,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import com.yash.edusmart.navigation.Screens
-import com.yash.edusmart.services.SocketService
 import com.yash.edusmart.services.TokenManager
 import com.yash.edusmart.viewmodel.ChatViewModel
 import com.yash.edusmart.viewmodel.MainAppViewModel
 import com.yash.edusmart.viewmodel.StudentViewModel
 import com.yash.edusmart.viewmodel.UserViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -53,7 +47,6 @@ fun LoadingScreen(navController: NavHostController,
             when (userType) {
                 "STUDENT" -> {
                     studentViewModel.getHolidaysServer()
-                    mainAppViewModel.getAssignmentStudent()
                     navController.navigate(Screens.Student.name) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -62,7 +55,6 @@ fun LoadingScreen(navController: NavHostController,
                 "TEACHER" -> {
                     mainAppViewModel.getAllBranch()
                     if(email!=null)  mainAppViewModel.getTimeTableTeacher(email)
-                    mainAppViewModel.getAssignments()
                     navController.navigate(Screens.Teacher.name) {
                         popUpTo(0) { inclusive = true }
                     }

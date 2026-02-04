@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import android.app.DatePickerDialog
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -20,6 +21,7 @@ import com.yash.edusmart.data.AssignmentDTO
 import com.yash.edusmart.screens.component.CustomDropdownMenu
 import com.yash.edusmart.viewmodel.ChatViewModel
 import com.yash.edusmart.viewmodel.MainAppUiState
+import com.yash.edusmart.viewmodel.MainAppViewModel
 import com.yash.edusmart.viewmodel.UserUiState
 import java.time.LocalDate
 import java.time.ZoneId
@@ -34,8 +36,22 @@ fun AssignmentUploadDataScreen(
     chatViewModel: ChatViewModel,
     userUiState: UserUiState,
     mainAppUiState: MainAppUiState,
-    navController: NavHostController
+    navController: NavHostController,
+    mainAppViewModel: MainAppViewModel
 ) {
+
+    val context = LocalContext.current
+    LaunchedEffect(chatViewModel) {
+        chatViewModel.toastEvent.collect {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        }
+    }
+    LaunchedEffect(mainAppViewModel) {
+        mainAppViewModel.toastEvent.collect {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     var description by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     val branches by remember(mainAppUiState.branch){
@@ -46,7 +62,6 @@ fun AssignmentUploadDataScreen(
     val batch = remember { mutableStateOf("Select batch") }
     val sem = remember { mutableStateOf("Select Semester") }
 
-    val context = LocalContext.current
 
     // DatePickerDialog
     val datePickerDialog = remember {

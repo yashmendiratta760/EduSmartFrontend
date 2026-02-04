@@ -99,6 +99,10 @@ fun MainLogic(navController: NavHostController,
             mainAppViewModel.getAttendance(userUiState.email)
         }
     }
+    LaunchedEffect(studentUiState.branch,studentUiState.semester) {
+        if(studentUiState.branch!="" && studentUiState.semester!=0)
+            mainAppViewModel.getAssignmentStudent(studentUiState.branch,studentUiState.semester.toString())
+    }
     LaunchedEffect(mainAppUiState.callComplete,mainAppUiState.timeTableEntries ){
         mainAppViewModel.getTimeTableEntries(studentUiState.branch, studentUiState.semester)
         mainAppViewModel.setFalseCallComplete()
@@ -207,7 +211,9 @@ fun MainLogic(navController: NavHostController,
             0->HomeScreen(innerPadding = innerPadding,
                 selectedDay = selectedDay,
                 mainAppUiState = mainAppUiState,
-                chatUiState = chatUiState
+                chatUiState = chatUiState,
+                mainAppViewModel=mainAppViewModel,
+                userUiState=userUiState
                 ){index->
                 selectedIndex = index
             }

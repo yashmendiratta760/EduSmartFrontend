@@ -14,7 +14,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -30,6 +33,7 @@ import androidx.navigation.NavHostController
 import com.yash.edusmart.data.AssignmentGetDTO
 import com.yash.edusmart.db.Assignments
 import com.yash.edusmart.navigation.Screens
+import com.yash.edusmart.screens.component.CustomDropdownMenu
 import com.yash.edusmart.screens.component.student.TaskAlert
 import com.yash.edusmart.viewmodel.ChatUiState
 import com.yash.edusmart.viewmodel.ChatViewModel
@@ -41,6 +45,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.collections.emptyList
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AssignmentScreen(innerPadding: PaddingValues,
@@ -51,6 +56,22 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                      mainAppViewModel: MainAppViewModel,
                      userUiState: UserUiState,
                      navController: NavHostController){
+
+
+    val branches by remember(mainAppUiState.branch) {
+        derivedStateOf {
+            mainAppUiState.branch.distinct()
+        }
+    }
+    val semester = listOf("1","2","3","4","5","6","7","8")
+    val branchSelected = remember { mutableStateOf("Select Branch") }
+    val semSelected = remember { mutableStateOf("Select Semester") }
+
+    LaunchedEffect(branchSelected.value,semSelected.value){
+        if(branchSelected.value!="Select Branch" && semSelected.value!="Select Semester"){
+            mainAppViewModel.getAssignmentsTeacher(branchSelected.value, semSelected.value)
+        }
+    }
 
     var assigns by remember {
         mutableStateOf<List<Assignments>>(emptyList())
@@ -79,68 +100,101 @@ fun AssignmentScreen(innerPadding: PaddingValues,
         }
     }
 
-    Box(modifier = Modifier
-        .padding(innerPadding)
-        .fillMaxSize()) {
+    val pullState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        state = pullState,
+        onRefresh = {
+            if(isStudent) mainAppViewModel.getAssignmentStudent(userUiState.branch,userUiState.semester)
+            else{
+                if(branchSelected.value!="Select Branch" && semSelected.value!="Select Semester")
+                    mainAppViewModel.getAssignmentsTeacher(branchSelected.value,semSelected.value)
+            }
+        },
+        modifier = Modifier.padding(innerPadding),
+        isRefreshing = mainAppUiState.isLoading
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
 
-        LazyColumn {
-            if(isStudent) {
-                items(filteredStudentAssignments) { a ->
-                    var checked by remember { mutableStateOf(a.isCompleted) }
-                    TaskAlert(
-                        heading = "Assignment",
-                        task = a.task,
-                        deadline = chatViewModel.formatDate(a.deadline),
-                        isStudent = true,
-                        checked = checked,
-                        onSubmit = {
-                            mainAppViewModel.markAssignment(a.id,userUiState.enroll)
-                        },
-                        onCheckedChange = {
-                            checked=!checked
-                            mainAppViewModel.updateIsCompleted(a.id,checked)
+            LazyColumn {
+                if (isStudent) {
+                    items(filteredStudentAssignments) { a ->
+                        var checked by remember { mutableStateOf(a.isCompleted) }
+                        TaskAlert(
+                            heading = "Assignment",
+                            task = a.task,
+                            deadline = chatViewModel.formatDate(a.deadline),
+                            isStudent = true,
+                            checked = checked,
+                            onSubmit = {
+                                mainAppViewModel.markAssignment(a.id, userUiState.enroll)
+                            },
+                            onCheckedChange = {
+                                checked = !checked
+                                mainAppViewModel.updateIsCompleted(a.id, checked)
+                            }
+                        )
+                    }
+                } else {
+                    item {
+                        CustomDropdownMenu(
+                            options = branches,
+                            selectedOption = branchSelected.value
+                        ) { opt ->
+                            branchSelected.value = opt
                         }
-                    )
-                }
-            }else{
-                items(assignsT) { a ->
-                    TaskAlert(
-                        heading = "Assignment",
-                        task = a.assignment,
-                        deadline = chatViewModel.formatDate(a.deadline),
-                        isStudent = false,
-                        isTeacher = true,
-                        completedByNames = a.enroll,
-                        onDeleteClick = {
-                            mainAppViewModel.deleteById(id = a.id)
+                        CustomDropdownMenu(
+                            options = semester,
+                            selectedOption = semSelected.value
+                        ) { opt ->
+                            semSelected.value = opt
                         }
-                    )
+                    }
+                    items(assignsT) { a ->
+                        TaskAlert(
+                            heading = "Assignment",
+                            task = a.assignment,
+                            deadline = chatViewModel.formatDate(a.deadline),
+                            isStudent = false,
+                            isTeacher = true,
+                            completedByNames = a.enroll,
+                            onDeleteClick = {
+                                mainAppViewModel.deleteById(
+                                    id = a.id,
+                                    branchSelected.value,
+                                    semSelected.value
+                                )
+                            }
+                        )
+                    }
                 }
             }
-        }
-        if(!isStudent) {
+            if (!isStudent) {
 
-            Box(
-                modifier = Modifier
-                .background(
-                    color = Color(0xFF68DE50),
-                    shape = CircleShape
-                )
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFF68DE50),
+                            shape = CircleShape
+                        )
 
-                .align(Alignment.BottomEnd)
-                .size(60.dp)
-                .padding(10.dp)
-                .clickable(
-                    onClick = {
-                        navController.navigate(Screens.Assignment_DATA.name)
-                    }
-                ),
-                contentAlignment = Alignment.Center) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "POST",
-                    tint = Color.Black
-                )
+                        .align(Alignment.BottomEnd)
+                        .size(60.dp)
+                        .padding(10.dp)
+                        .clickable(
+                            onClick = {
+                                navController.navigate(Screens.Assignment_DATA.name)
+                            }
+                        ),
+                    contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "POST",
+                        tint = Color.Black
+                    )
+                }
             }
         }
     }

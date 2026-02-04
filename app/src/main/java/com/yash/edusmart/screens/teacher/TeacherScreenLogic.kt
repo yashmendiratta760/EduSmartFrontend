@@ -2,7 +2,6 @@ package com.yash.edusmart.screens.teacher
 
 import android.annotation.SuppressLint
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
@@ -46,7 +45,6 @@ import com.yash.edusmart.viewmodel.MainAppUiState
 import com.yash.edusmart.viewmodel.MainAppViewModel
 import com.yash.edusmart.viewmodel.StudentUiState
 import com.yash.edusmart.viewmodel.UserUiState
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -94,11 +92,7 @@ fun TeacherMainLogic(navController: NavHostController,
     var canNavigateBackChat by remember { mutableStateOf(false) }
     var chatBackPressed by remember { mutableStateOf(false) }
 
-    LaunchedEffect(selectedIndex) {
-        if(selectedIndex==2){
-            mainAppViewModel.getAssignments()
-        }
-    }
+
     val selectedDay = remember { mutableStateOf(studentUiState.daySelected) }
 
     LaunchedEffect(selectedBatch.value, selectedSemester.value){

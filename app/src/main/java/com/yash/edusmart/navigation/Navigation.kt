@@ -94,7 +94,8 @@ fun Navigation(navController: NavHostController = rememberNavController(),
                 chatViewModel = chatViewModel,
                 userUiState = userUiState,
                 mainAppUiState = mainAppUiState,
-                navController=navController
+                navController=navController,
+                mainAppViewModel = mainAppViewModel
             )
         }
 

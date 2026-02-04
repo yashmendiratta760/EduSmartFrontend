@@ -16,6 +16,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -64,6 +67,7 @@ fun AttendanceView(navController: NavHostController,
                 .distinct()                 // keep only unique values
         }
     }
+
 
 
     var selectedOption by rememberSaveable { mutableStateOf(studentUiState.selectedSubject) }
@@ -164,22 +168,92 @@ fun AttendanceView(navController: NavHostController,
 
 
 
+    val pullState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        state = pullState,
+        onRefresh = {
+            mainAppViewModel.getAttendance(
+                email = userUiState.email
+            )
+        },
+        modifier = Modifier.padding(innerPadding),
+        isRefreshing = mainAppUiState.isLoading
+    ) {
+        LazyColumn() {
+            item {
 
-    LazyColumn(modifier = Modifier.padding(innerPadding)){
-        item {
+                Column(
+                    modifier = Modifier.padding(
+                        start = 20.dp, end = 20.dp,
+                        top = 10.dp, bottom = 10.dp
+                    )
+                ) {
+                    CustomDropdownMenu(
+                        options = options,
+                        selectedOption = selectedOption
+                    ) { option ->
+                        selectedOption = option
+                    }
+                }
 
-            Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp,
-                top = 10.dp, bottom = 10.dp)) {
-                CustomDropdownMenu(options=options,
-                    selectedOption = selectedOption){option->
-                    selectedOption = option
+
+            }
+            item {
+                if (selectedOption != "Select Subject") {
+                    Box(
+                        modifier = Modifier
+                            .padding(20.dp)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFF0B2649),
+                                        Color(0xFF3B4D6B)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(30.dp)
+                            )
+                    ) {
+                        val percentage =
+                            if (filteredAttendance.isNotEmpty())
+                                (presentDatesLocal.size.toFloat() / filteredAttendance.size.toFloat()) * 100f
+                            else 0f
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(20.dp),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    "Current Attendance",
+                                    fontSize = 12.sp,
+                                    color = Color(0x9DFFFBFB),
+                                    modifier = Modifier.padding(bottom = 10.dp)
+                                )
+                                Text(String.format("%.2f%%", percentage), fontSize = 35.sp)
+                            }
+                            Column(
+                                modifier = Modifier.padding(22.dp),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    "Classes Attended", fontSize = 12.sp,
+                                    color = Color(0x9DFFFBFB),
+                                    modifier = Modifier.padding(bottom = 10.dp)
+                                )
+                                Text(
+                                    text = "${presentDatesLocal.size} of ${filteredAttendance.size}",
+                                    fontSize = 30.sp,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
-
-        }
-        item {
-            if (selectedOption!="Select Subject") {
+            item {
                 Box(
                     modifier = Modifier
                         .padding(20.dp)
@@ -192,71 +266,37 @@ fun AttendanceView(navController: NavHostController,
                             ),
                             shape = RoundedCornerShape(30.dp)
                         )
-                ){
-                    val percentage =
-                        if (filteredAttendance.isNotEmpty())
-                            (presentDatesLocal.size.toFloat() / filteredAttendance.size.toFloat()) * 100f
-                        else 0f
-                    Row(modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween) {
-                        Column(modifier = Modifier.padding(20.dp),
-                            verticalArrangement = Arrangement.SpaceBetween) {
-                            Text("Current Attendance",
-                                fontSize = 12.sp,
-                                color = Color(0x9DFFFBFB),
-                                modifier = Modifier.padding(bottom = 10.dp))
-                            Text(String.format("%.2f%%", percentage), fontSize = 35.sp)
-                        }
-                        Column(modifier = Modifier.padding(22.dp),
-                            verticalArrangement = Arrangement.SpaceBetween) {
-                            Text("Classes Attended", fontSize = 12.sp,
-                                color = Color(0x9DFFFBFB),
-                                modifier = Modifier.padding(bottom = 10.dp))
-                            Text(text = "${presentDatesLocal.size} of ${filteredAttendance.size}", fontSize = 30.sp,
-                            modifier = Modifier.padding(end = 8.dp))
-                        }
-                    }
-                }
-            }
-        }
+                ) {
 
-        item {
-            Box(
-                modifier = Modifier
-                    .padding(20.dp)
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color(0xFF0B2649),
-                                Color(0xFF3B4D6B)
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Attendance Calendar", fontSize = 25.sp,
+                                modifier = Modifier.padding(6.dp),
+                                fontWeight = FontWeight.ExtraBold
                             )
-                        ),
-                        shape = RoundedCornerShape(30.dp)
-                    )
-            ){
+                            val color = Color.Green
 
-                Column {
-                    Row(modifier = Modifier.fillMaxWidth()
-                        .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Attendance Calendar", fontSize = 25.sp,
-                            modifier = Modifier.padding(6.dp),
-                            fontWeight = FontWeight.ExtraBold)
-                        val color = Color.Green
+                        }
+                        CalendarView(
+                            presentDates = monthWisePresentDates,
+                            absentDates = monthWiseAbsentDates,
+                            holidays = monthWiseHolidayDates,
+                            studentViewModel = studentViewModel,
+                            studentUiState = studentUiState,
+                            selectedMonth = { month -> currentMonth = month }
+                        )
 
                     }
-                    CalendarView(
-                        presentDates = monthWisePresentDates,
-                        absentDates = monthWiseAbsentDates,
-                        holidays = monthWiseHolidayDates,
-                        studentViewModel = studentViewModel,
-                        studentUiState = studentUiState,
-                        selectedMonth = { month -> currentMonth = month }
-                    )
-
                 }
             }
         }
+
     }
 }
 

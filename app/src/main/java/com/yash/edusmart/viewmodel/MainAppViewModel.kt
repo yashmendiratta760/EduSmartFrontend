@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yash.edusmart.api.AttendanceDTO
@@ -80,14 +81,20 @@ class MainAppViewModel @Inject constructor(
     // ---------------------------
     // ASSIGNMENTS
     // ---------------------------
-    fun getAssignments() {
+    fun getAssignmentsTeacher(branch: String, sem: String) {
         viewModelScope.launch(Dispatchers.IO) {
             safeApi(
-                call = { mainAppRepo.getAllAssignTeacher() },
+                call = {
+                    setLoadingTrue()
+                    mainAppRepo.getAllAssignTeacher(branch,sem) },
                 onSuccess = { list ->
+                    setLoadingFalse()
                     val assignments = list ?: emptyList()
                     _uiState.update { it.copy(assignments = assignments) }
                     assignments.forEach { insertOrSync(it) }
+                },
+                onError = {
+                    setLoadingFalse()
                 }
             )
         }
@@ -128,25 +135,30 @@ class MainAppViewModel @Inject constructor(
 
     fun getAllTeacher(branch: String,sem: String){
         viewModelScope.launch(Dispatchers.IO){
-            safeApi(call = {mainAppRepo.getAllTeacher(branch,sem)},
+            safeApi(call = {
+                setChatListLoadingTrue()
+                mainAppRepo.getAllTeacher(branch,sem)},
                 onSuccess = {tea->
+                    setChatListLoadingFalse()
                     _uiState.update { it->
                         it.copy(teacher = tea?:emptyList())
                     }
-                    Log.e("TEACHERGET",tea.toString())
                 }, onError = {err->
-                    Log.e("TEACHERGET",err)
+                    setChatListLoadingFalse()
                 }
 
             )
         }
     }
 
-    fun getAssignmentStudent() {
+    fun getAssignmentStudent(branch: String,sem: String) {
         viewModelScope.launch(Dispatchers.IO) {
             safeApi(
-                call = { mainAppRepo.getAllAssign() },
+                call = {
+                    setLoadingTrue()
+                    mainAppRepo.getAllAssign(branch,sem) },
                 onSuccess = { list ->
+                    setLoadingFalse()
                     val latest = (list ?: emptyList()).map {
                         Assignments(
                             id = it.id,
@@ -159,6 +171,9 @@ class MainAppViewModel @Inject constructor(
                         )
                     }
                     syncAssignments(latest)
+                },
+                onError = {
+                    setLoadingFalse()
                 }
             )
         }
@@ -339,16 +354,34 @@ class MainAppViewModel @Inject constructor(
     fun getAttendance(email: String) {
         viewModelScope.launch(Dispatchers.IO) {
             safeApi(
-                call = { mainAppRepo.getAttendanceByEmail(email) },
+                call = {
+                    setLoadingTrue()
+                            mainAppRepo.getAttendanceByEmail(email)
+                       },
                 onSuccess = { attendance ->
+                    setLoadingFalse()
                     _uiState.update {
                         it.copy(
                             attendance = attendance
                                 ?: listOf(AttendanceDTO(LocalDate.now().toString(), "NULL", "NULL"))
                         )
                     }
+                },
+                onError = {
+                    setLoadingFalse()
                 }
             )
+        }
+    }
+
+    fun setLoadingTrue(){
+        _uiState.update { it->
+            it.copy(isLoading = true)
+        }
+    }
+    private fun setLoadingFalse(){
+        _uiState.update { it->
+            it.copy(isLoading = false)
         }
     }
 
@@ -408,11 +441,15 @@ class MainAppViewModel @Inject constructor(
     fun getStudentListStudentChat(branch: String, semester: String) {
         viewModelScope.launch(Dispatchers.IO) {
             safeApi(
-                call = { mainAppRepo.getStudentsByBranchAndSemester(StudentsListDTO(branch, semester)) },
+                call = {
+                    setChatListLoadingTrue()
+                    mainAppRepo.getStudentsByBranchAndSemester(StudentsListDTO(branch, semester)) },
                 onSuccess = { students ->
+                    setChatListLoadingFalse()
                     _uiState.update { it.copy(studentDataChat = students ?: emptyList()) }
                 },
                 onError = { err ->
+                    setChatListLoadingFalse()
                     _uiState.update { it.copy(studentDataChat = emptyList()) }
                     showToast(err)
                 }
@@ -423,11 +460,15 @@ class MainAppViewModel @Inject constructor(
     fun getStudentListTeacherChat(branch: String, semester: String) {
         viewModelScope.launch(Dispatchers.IO) {
             safeApi(
-                call = { mainAppRepo.getStudentsByBranchAndSemesterTeacher(StudentsListDTO(branch, semester)) },
+
+                call = { setChatListLoadingTrue()
+                    mainAppRepo.getStudentsByBranchAndSemesterTeacher(StudentsListDTO(branch, semester)) },
                 onSuccess = { students ->
+                    setChatListLoadingFalse()
                     _uiState.update { it.copy(studentDataChat = students ?: emptyList()) }
                 },
                 onError = { err ->
+                    setChatListLoadingFalse()
                     _uiState.update { it.copy(studentDataChat = emptyList()) }
                     showToast(err)
                 }
@@ -467,13 +508,13 @@ class MainAppViewModel @Inject constructor(
         }
     }
 
-    fun deleteById(id: Long){
+    fun deleteById(id: Long,branch: String,sem: String){
         viewModelScope.launch(Dispatchers.IO) {
             safeApi(call = {
                 mainAppRepo.deleteAssignment(id)
             },
                 onSuccess = { str->
-                    getAssignments()
+                    getAssignmentsTeacher(branch = branch, sem = sem)
                     showToast(str?:"Uploaded")
                 },
                 onError = {
@@ -481,4 +522,17 @@ class MainAppViewModel @Inject constructor(
                 })
         }
     }
+
+    private fun setChatListLoadingTrue(){
+        _uiState.update { it->
+            it.copy(isChatListLoading=true)
+        }
+    }
+    private fun setChatListLoadingFalse(){
+        _uiState.update { it->
+            it.copy(isChatListLoading=false)
+        }
+    }
+
+
 }

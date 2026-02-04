@@ -64,11 +64,17 @@ interface MainAppApi
     @GET("/teacher/getAllBranch")
     suspend fun getAllBranch(): Response<List<String>>
 
-    @GET("/teacher/getAllAssignments")
-    suspend fun getAllAssignTeacher(): Response<List<AssignmentGetDTO>>
+    @GET("/teacher/getAllAssignmentsByBranchAndSem")
+    suspend fun getAllAssignTeacher(
+        @Query("branch") branch: String,
+        @Query("sem") sem: String
+    ): Response<List<AssignmentGetDTO>>
 
-    @GET("/student/getAssignment")
-    suspend fun getAllAssign(): Response<List<AssignmentStudent>>
+    @GET("/student/getAllAssignmentsByBranchAndSem")
+    suspend fun getAllAssign(
+        @Query("branch") branch: String,
+        @Query("sem") sem: String
+    ): Response<List<AssignmentStudent>>
 
     @POST("/student/markAssignment")
     suspend fun markAssignment(
