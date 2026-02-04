@@ -1,6 +1,5 @@
 package com.yash.edusmart.login_signup.screens
 
-import android.app.Activity
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -48,7 +47,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
 import com.yash.edusmart.R
-import com.yash.edusmart.login_signup.api.UserDTO
+import com.yash.edusmart.api.UserDTO
 import com.yash.edusmart.login_signup.screens.component.CustomTextField
 import com.yash.edusmart.login_signup.screens.component.LoginSignupBackground
 import com.yash.edusmart.viewmodel.LoginSignupViewModel
@@ -199,41 +198,7 @@ fun Login(loginSignupViewModel: LoginSignupViewModel,
                 )
 
             }
-            Row(modifier = Modifier.padding(top = 4.dp)) {
-                Text(text = "Not a user? ",
-                    color = if(isDarkTheme) Color.White else Color.Black
 
-                )
-                Text(
-                    text = "Signup",
-                    color = Color.Blue,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable(onClick = {
-                        navController.navigate(Screens.Signup.name){
-                            popUpTo(0){
-                                inclusive=true
-                            }
-                        }
-                    })
-                )
-            }
-
-            Text(
-                text = "or Sign in with",
-                modifier = Modifier.padding(4.dp),
-                color = if(isDarkTheme) Color.White else Color.Black            )
-            Image(
-                painter = painterResource(R.drawable.google_logo),
-                contentDescription = "Google logo",
-                modifier = Modifier
-                    .clickable(onClick = {
-                        googleSignInClient.signOut().addOnCompleteListener {
-                            val signInIntent = googleSignInClient.signInIntent
-                            googleSignInLauncher.launch(signInIntent)
-                        }
-                    })
-                    .size(50.dp)
-            )
         }
     }
 }

@@ -1,31 +1,50 @@
 package com.yash.edusmart.screens.teacher
 
 import android.annotation.SuppressLint
-import androidx.compose.runtime.Composable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import android.app.DatePickerDialog
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.yash.edusmart.data.AssignmentDTO
 import com.yash.edusmart.screens.component.CustomDropdownMenu
 import com.yash.edusmart.viewmodel.ChatViewModel
-import com.yash.edusmart.viewmodel.MainAppUiState
-import com.yash.edusmart.viewmodel.MainAppViewModel
+import com.yash.edusmart.viewmodel.TeacherUiState
+import com.yash.edusmart.viewmodel.TeacherViewModel
 import com.yash.edusmart.viewmodel.UserUiState
 import java.time.LocalDate
 import java.time.ZoneId
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,9 +54,9 @@ import java.time.ZoneId
 fun AssignmentUploadDataScreen(
     chatViewModel: ChatViewModel,
     userUiState: UserUiState,
-    mainAppUiState: MainAppUiState,
+    teacherUiState: TeacherUiState,
     navController: NavHostController,
-    mainAppViewModel: MainAppViewModel
+    teacherViewModel: TeacherViewModel
 ) {
 
     val context = LocalContext.current
@@ -46,17 +65,17 @@ fun AssignmentUploadDataScreen(
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
-    LaunchedEffect(mainAppViewModel) {
-        mainAppViewModel.toastEvent.collect {
+    LaunchedEffect(teacherViewModel) {
+        teacherViewModel.toastEvent.collect {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
 
     var description by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
-    val branches by remember(mainAppUiState.branch){
+    val branches by remember(teacherUiState.branch){
         derivedStateOf {
-            mainAppUiState.branch.distinct()
+            teacherUiState.branch.distinct()
         }
     }
     val batch = remember { mutableStateOf("Select batch") }

@@ -1,12 +1,11 @@
 package com.yash.edusmart.repository
 
-import com.yash.edusmart.login_signup.api.LoginSignupApi
-import com.yash.edusmart.login_signup.api.OtpData
-import com.yash.edusmart.login_signup.api.TokenData
-import com.yash.edusmart.login_signup.api.UserDTO
+import com.yash.edusmart.api.LoginSignupApi
+import com.yash.edusmart.api.OtpData
+import com.yash.edusmart.api.TokenData
+import com.yash.edusmart.api.UserDTO
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Response

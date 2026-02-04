@@ -1,11 +1,9 @@
 package com.yash.edusmart.repository
 
-import androidx.room.Query
 import com.yash.edusmart.db.ChatDao
 import com.yash.edusmart.db.ChatEntries
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.Flow

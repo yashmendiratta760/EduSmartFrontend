@@ -1,8 +1,5 @@
 package com.yash.edusmart.screens
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,9 +29,6 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +36,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,12 +43,9 @@ import androidx.navigation.NavHostController
 import com.yash.edusmart.R
 import com.yash.edusmart.navigation.Screens
 import com.yash.edusmart.screens.component.student.SettingsOptionBox
-import com.yash.edusmart.services.TokenManager
 import com.yash.edusmart.viewmodel.LoginSignupViewModel
-import com.yash.edusmart.viewmodel.LoginUiState
 import com.yash.edusmart.viewmodel.UserUiState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -71,8 +61,7 @@ fun SettingsScreen(innerPadding: PaddingValues,
                    onEditProfileClick:()-> Unit,
                    loginSignupViewModel: LoginSignupViewModel,
                    navController: NavHostController,
-                   userUiState: UserUiState,
-                   loginUiState: LoginUiState){
+                   userUiState: UserUiState){
 
 
 
@@ -81,31 +70,31 @@ fun SettingsScreen(innerPadding: PaddingValues,
 
 
     val accountData:List<Penta<String, String, ImageVector, Color, () -> Unit>>  = listOf(
-        Penta("Edit Profile","Update your personal information", Icons.Default.Person,Color.Blue,{}),
-        Penta("Change Password","Update your password", Icons.Default.Lock,Color.Cyan,{}),
-        Penta("Email Settings","Manage email preferences", Icons.Default.Email,Color.Green,{})
-        )
+        Penta("Edit Profile","Update your personal information", Icons.Default.Person,Color.Blue) {},
+        Penta("Change Password","Update your password", Icons.Default.Lock,Color.Cyan) {},
+        Penta("Email Settings","Manage email preferences", Icons.Default.Email,Color.Green) {}
+    )
     val notificationsData :List<Penta<String, String, ImageVector, Color, () -> Unit>> = listOf(
-        Penta("Push Notifications","Enable push notifications",Icons.Default.Notifications,Color(0xFFE36D24),{}),
-        Penta("Email Notifications","Receive updates via email", Icons.Default.Email,Color(0xFFB514F0),{}),
-        Penta("Class Reminders","Get class reminders one day before",Icons.Default.CalendarToday,Color.Blue,{}),
-        Penta("Attendance Alerts","Low attendance notifications", Icons.Default.NotificationsActive,Color.Red,{})
+        Penta("Push Notifications","Enable push notifications",Icons.Default.Notifications,Color(0xFFE36D24)) {},
+        Penta("Email Notifications","Receive updates via email", Icons.Default.Email,Color(0xFFB514F0)) {},
+        Penta("Class Reminders","Get class reminders one day before",Icons.Default.CalendarToday,Color.Blue) {},
+        Penta("Attendance Alerts","Low attendance notifications", Icons.Default.NotificationsActive,Color.Red) {}
     )
     val supportData:List<Penta<String, String, ImageVector, Color, () -> Unit>>  = listOf(
-        Penta("Logout","", Icons.Outlined.Delete,Color.Red,{
+        Penta("Logout","", Icons.Outlined.Delete,Color.Red) {
             coroutineScope.launch(Dispatchers.IO) {
                 loginSignupViewModel.logout()
-                withContext(Dispatchers.Main){
-                    navController.navigate(Screens.Login.name){
-                        popUpTo(0){
-                            inclusive=true
+                withContext(Dispatchers.Main) {
+                    navController.navigate(Screens.Login.name) {
+                        popUpTo(0) {
+                            inclusive = true
                         }
                     }
                 }
             }
-        }),
-        Penta("Help & Support","Get help and FAQ's", Icons.Default.QuestionMark,Color.Magenta,{}),
-        Penta("About EduSmart","Version 1.0.0",Icons.Default.BookmarkBorder,Color.Gray,{})
+        },
+        Penta("Help & Support","Get help and FAQ's", Icons.Default.QuestionMark,Color.Magenta) {},
+        Penta("About EduSmart","Version 1.0.0",Icons.Default.BookmarkBorder,Color.Gray) {}
     )
 
     LazyColumn(modifier = Modifier
@@ -134,7 +123,7 @@ fun SettingsScreen(innerPadding: PaddingValues,
                         }
                     )
             ) {
-                Row(modifier = Modifier.padding(10.dp),) {
+                Row(modifier = Modifier.padding(10.dp)) {
                     Box {
 
                         Image(
@@ -166,7 +155,7 @@ fun SettingsScreen(innerPadding: PaddingValues,
                             start = 10.dp
                         )
                     ) {
-                        if(userUiState.userType.equals("STUDENT")) {
+                        if(userUiState.userType == "STUDENT") {
                             Text(
                                 text = userUiState.enroll,
                                 color = Color.White
@@ -176,7 +165,7 @@ fun SettingsScreen(innerPadding: PaddingValues,
                             text = "Name: " + userUiState.name,
                             color = Color.White
                         )
-                        if(userUiState.userType.equals("STUDENT")) {
+                        if(userUiState.userType == "STUDENT") {
                             Text(
                                 text = "Branch: " + userUiState.branch + "   Sem: " + userUiState.semester,
                                 color = Color.White

@@ -1,20 +1,16 @@
 package com.yash.edusmart.repository
 
 import android.content.Context
-import com.yash.edusmart.api.MainAppApi
+import com.yash.edusmart.api.StudentApi
+import com.yash.edusmart.api.TeacherApi
 import com.yash.edusmart.db.RoomDb
-import com.yash.edusmart.login_signup.api.LoginSignupApi
-import com.yash.edusmart.services.TokenManager
-import com.yash.edusmart.services.getWebSocketUrl
+import com.yash.edusmart.api.LoginSignupApi
 import com.yash.edusmart.services.isEmulator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -23,7 +19,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
-
 
 
 class AuthInterceptor : Interceptor {
@@ -94,9 +89,16 @@ class NetworkModule {
 
     @Provides
     @Singleton
-    fun providesTeacherApi(retrofit: Retrofit): MainAppApi
+    fun providesTeacherApi(retrofit: Retrofit): TeacherApi
     {
-        return retrofit.create(MainAppApi::class.java)
+        return retrofit.create(TeacherApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun providesStudentApi(retrofit: Retrofit): StudentApi
+    {
+        return retrofit.create(StudentApi::class.java)
     }
 
     @Provides

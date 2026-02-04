@@ -52,10 +52,10 @@ fun CalendarView(
     studentUiState: StudentUiState,
     studentViewModel: StudentViewModel
 ) {
-    var firstDayOfMonth by remember { mutableStateOf(studentUiState.selectedMonth) }
+    var firstDayOfMonth by remember { mutableStateOf(LocalDate.now().withDayOfMonth(1)) }
 
     LaunchedEffect(firstDayOfMonth) {
-        studentViewModel.setMonth(firstDayOfMonth)
+//        studentViewModel.setMonth(firstDayOfMonth)
         selectedMonth("${firstDayOfMonth.month} ${firstDayOfMonth.year}")
     }
 

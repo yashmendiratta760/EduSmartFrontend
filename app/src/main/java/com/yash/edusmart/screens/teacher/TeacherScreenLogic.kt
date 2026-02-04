@@ -6,12 +6,12 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timelapse
-import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Settings
@@ -41,29 +41,34 @@ import com.yash.edusmart.viewmodel.ChatUiState
 import com.yash.edusmart.viewmodel.ChatViewModel
 import com.yash.edusmart.viewmodel.LoginSignupViewModel
 import com.yash.edusmart.viewmodel.LoginUiState
-import com.yash.edusmart.viewmodel.MainAppUiState
-import com.yash.edusmart.viewmodel.MainAppViewModel
 import com.yash.edusmart.viewmodel.StudentUiState
+import com.yash.edusmart.viewmodel.StudentViewModel
+import com.yash.edusmart.viewmodel.TeacherUiState
+import com.yash.edusmart.viewmodel.TeacherViewModel
 import com.yash.edusmart.viewmodel.UserUiState
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun TeacherMainLogic(navController: NavHostController,
-                     mainAppUiState: MainAppUiState,
+                     teacherUiState: TeacherUiState,
                      loginSignupViewModel: LoginSignupViewModel,
-                     mainAppViewModel: MainAppViewModel,
+                     teacherViewModel: TeacherViewModel,
                      chatViewModel: ChatViewModel,
                      userUiState: UserUiState,
                      chatUiState: ChatUiState,
                      studentUiState: StudentUiState,
+                     studentViewModel: StudentViewModel,
                      loginUiState: LoginUiState){
     val context = LocalContext.current
     val bottomBarItems = listOf(
         Triple("Attendance", Icons.Outlined.Timelapse, Icons.Default.Timelapse),
         Triple("TimeTable", Icons.Outlined.CalendarMonth, Icons.Default.CalendarMonth),
-        Triple("Assignments", Icons.Outlined.Assignment, Icons.Default.Assignment),
+        Triple("Assignments", Icons.AutoMirrored.Outlined.Assignment,
+            Icons.AutoMirrored.Filled.Assignment
+        ),
         Triple("Chat", Icons.Outlined.Group, Icons.Default.Group),
         Triple("Settings", Icons.Outlined.Settings, Icons.Default.Settings)
     )
@@ -73,14 +78,13 @@ fun TeacherMainLogic(navController: NavHostController,
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
-    LaunchedEffect(mainAppViewModel) {
-        mainAppViewModel.toastEvent.collect {
+    LaunchedEffect(teacherViewModel) {
+        teacherViewModel.toastEvent.collect {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
 
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val scrollBehaviorTimeTable = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scrollBehaviorChat = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -93,13 +97,13 @@ fun TeacherMainLogic(navController: NavHostController,
     var chatBackPressed by remember { mutableStateOf(false) }
 
 
-    val selectedDay = remember { mutableStateOf(studentUiState.daySelected) }
+    val selectedDay = remember { mutableStateOf(LocalDate.now().dayOfWeek.toString().lowercase().replaceFirstChar { it.uppercase() }) }
 
     LaunchedEffect(selectedBatch.value, selectedSemester.value){
 
         if(selectedBatch.value!="Select Branch" && selectedSemester.value!="Select Semester") {
-            mainAppViewModel.getTimeTableByBranchAndSemesterTeacher(selectedBatch.value, selectedSemester.value.toInt())
-            mainAppViewModel.getTimeTableEntries(selectedBatch.value, selectedSemester.value.toInt())
+            teacherViewModel.getTimeTableByBranchAndSemesterTeacher(selectedBatch.value, selectedSemester.value.toInt())
+            teacherViewModel.getTimeTableEntries(selectedBatch.value, selectedSemester.value.toInt())
         }
     }
 
@@ -107,59 +111,61 @@ fun TeacherMainLogic(navController: NavHostController,
 
     Scaffold(
         topBar = {
-            if(selectedIndex==0) {
-                CustomTopBar(
-                    navController = navController,
-                    title = "EduSmart",
-                    canNavigateBack = false,
-                    userType = "Teacher",
-                )
-            }
-            else if(selectedIndex == 1){
-                TopAppBar(
-                    scrollBehavior = scrollBehaviorTimeTable,
-                    title = {
-                        Text(text = "TimeTable",
-                            fontSize = 35.sp)
-                    }
-                )
-            }
-            else if(selectedIndex==2){
-                TopAppBar(
-                    scrollBehavior = scrollBehaviorTasks,
-                    title = {
-                        Text(text = "Assignment",
-                            fontSize = 35.sp)
-                    }
-                )
-            }
-            else if(selectedIndex==3){
-                TopAppBar(
-                    scrollBehavior = scrollBehaviorChat,
-                    title = {
-                        Text(text = "Chat Box",
-                            fontSize = 35.sp)
-                    },
-                    navigationIcon = {
-                        if(canNavigateBackChat){
-                            IconButton(onClick = {
-                               chatBackPressed=true
-                            }) {
-                                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back Arrow")
+            when (selectedIndex) {
+                0 -> {
+                    CustomTopBar(
+                        navController = navController,
+                        title = "EduSmart",
+                        canNavigateBack = false,
+                        userType = "Teacher",
+                    )
+                }
+                1 -> {
+                    TopAppBar(
+                        scrollBehavior = scrollBehaviorTimeTable,
+                        title = {
+                            Text(text = "TimeTable",
+                                fontSize = 35.sp)
+                        }
+                    )
+                }
+                2 -> {
+                    TopAppBar(
+                        scrollBehavior = scrollBehaviorTasks,
+                        title = {
+                            Text(text = "Assignment",
+                                fontSize = 35.sp)
+                        }
+                    )
+                }
+                3 -> {
+                    TopAppBar(
+                        scrollBehavior = scrollBehaviorChat,
+                        title = {
+                            Text(text = "Chat Box",
+                                fontSize = 35.sp)
+                        },
+                        navigationIcon = {
+                            if(canNavigateBackChat){
+                                IconButton(onClick = {
+                                    chatBackPressed=true
+                                }) {
+                                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back Arrow")
+                                }
                             }
                         }
-                    }
-                )
-            }
-            else if(selectedIndex == 4){
-                TopAppBar(
-                    scrollBehavior=scrollBehaviorSettings,
-                    title = {
-                        Text(text = "Settings",
-                            fontSize = 35.sp)
-                    }
-                )
+                    )
+                }
+                4 -> {
+                    TopAppBar(
+                        scrollBehavior=scrollBehaviorSettings,
+                        title = {
+                            Text(text = "Settings",
+                                fontSize = 35.sp)
+                        }
+                    )
+                }
             }
         },
         bottomBar = {
@@ -175,31 +181,30 @@ fun TeacherMainLogic(navController: NavHostController,
         when(selectedIndex){
 
             0-> AttendanceMarkScreen(innerPadding = innerPadding,
-                mainAppUiState = mainAppUiState,
-                mainAppViewModel = mainAppViewModel,
-                navController = navController,
-                scrollBehavior = scrollBehavior)
+                teacherUiState = teacherUiState,
+                teacherViewModel = teacherViewModel,
+                navController = navController)
 
             1->TimeTableTeacher(
                 innerPadding = innerPadding,
                 selectedDay = selectedDay,
-                mainAppViewModel=mainAppViewModel,
-                mainAppUiState = mainAppUiState,
-                userUiState = userUiState
+                teacherUiState = teacherUiState
             )
             2-> AssignmentScreen(innerPadding = innerPadding,
                 chatViewModel=chatViewModel,
                 chatUiState = chatUiState,
                 navController = navController,
-                mainAppUiState = mainAppUiState,
+                teacherUiState = teacherUiState,
                 userUiState = userUiState,
-                mainAppViewModel = mainAppViewModel,
+                teacherViewModel = teacherViewModel,
+                studentUiState = studentUiState,
+                studentViewModel = studentViewModel,
                 isStudent = false)
             3-> ChatScreen(
                 innerPadding = innerPadding,
                 isStudent = false,
-                mainAppViewModel = mainAppViewModel,
-                mainAppUiState = mainAppUiState,
+                teacherViewModel = teacherViewModel,
+                teacherUiState = teacherUiState,
                 chatViewModel = chatViewModel,
                 selectedChatType = selectedChatType,
                 selectedBatch = selectedBatch,
@@ -210,7 +215,8 @@ fun TeacherMainLogic(navController: NavHostController,
                 },
                 onBackClick = chatBackPressed,
                 userUiState = userUiState,
-                studentUiState = studentUiState
+                studentUiState = studentUiState,
+                studentViewModel = studentViewModel
             )
             4-> SettingsScreen(innerPadding = innerPadding,
                 onEditProfileClick = {
@@ -218,8 +224,7 @@ fun TeacherMainLogic(navController: NavHostController,
                 },
                 loginSignupViewModel = loginSignupViewModel,
                 navController = navController,
-                userUiState = userUiState,
-                loginUiState = loginUiState)
+                userUiState = userUiState)
 
         }
 

@@ -1,7 +1,6 @@
 package com.yash.edusmart.screens
 
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
@@ -36,22 +35,23 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.yash.edusmart.viewmodel.LoginSignupViewModel
 import com.yash.edusmart.screens.component.CustomBottomNavigationBar
 import com.yash.edusmart.screens.component.CustomTopBar
 import com.yash.edusmart.screens.student.AttendanceView
-import com.yash.edusmart.screens.student.HomeScreen
 import com.yash.edusmart.screens.student.ChatScreen
+import com.yash.edusmart.screens.student.HomeScreen
 import com.yash.edusmart.screens.teacher.AssignmentScreen
 import com.yash.edusmart.viewmodel.ChatUiState
 import com.yash.edusmart.viewmodel.ChatViewModel
+import com.yash.edusmart.viewmodel.LoginSignupViewModel
 import com.yash.edusmart.viewmodel.LoginUiState
-import com.yash.edusmart.viewmodel.MainAppUiState
-import com.yash.edusmart.viewmodel.MainAppViewModel
 import com.yash.edusmart.viewmodel.StudentUiState
 import com.yash.edusmart.viewmodel.StudentViewModel
+import com.yash.edusmart.viewmodel.TeacherUiState
+import com.yash.edusmart.viewmodel.TeacherViewModel
 import com.yash.edusmart.viewmodel.UserUiState
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -61,21 +61,21 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun MainLogic(navController: NavHostController,
                loginSignupViewModel: LoginSignupViewModel,
-               mainAppViewModel: MainAppViewModel,
               studentUiState: StudentUiState,
               studentViewModel: StudentViewModel,
-               mainAppUiState: MainAppUiState,
               chatViewModel: ChatViewModel,
               userUiState: UserUiState,
               chatUiState: ChatUiState,
+              teacherViewModel: TeacherViewModel,
+              teacherUiState: TeacherUiState,
               loginUiState: LoginUiState)
 {
     val context  = LocalContext.current
-    LaunchedEffect(studentUiState.branch,studentUiState.semester){
-        if(studentUiState.branch!="" && studentUiState.semester!=0) {
-            mainAppViewModel.getTimeTableByBranchAndSemester(
-                studentUiState.branch,
-                studentUiState.semester
+    LaunchedEffect(userUiState.branch,userUiState.semester){
+        if(userUiState.branch!="" && userUiState.semester.toInt()!=0) {
+            studentViewModel.getTimeTableByBranchAndSemester(
+                userUiState.branch,
+                userUiState.semester.toInt()
             )
         }
 
@@ -83,7 +83,7 @@ fun MainLogic(navController: NavHostController,
 
     LaunchedEffect(Unit) {
         launch {
-            mainAppViewModel.toastEvent.collect {
+            studentViewModel.toastEvent.collect {
                 Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             }
         }
@@ -96,29 +96,29 @@ fun MainLogic(navController: NavHostController,
 
     LaunchedEffect(userUiState.email) {
         if (userUiState.email!="null@null.com") {
-            mainAppViewModel.getAttendance(userUiState.email)
+            studentViewModel.getAttendance(userUiState.email)
         }
     }
-    LaunchedEffect(studentUiState.branch,studentUiState.semester) {
-        if(studentUiState.branch!="" && studentUiState.semester!=0)
-            mainAppViewModel.getAssignmentStudent(studentUiState.branch,studentUiState.semester.toString())
+    LaunchedEffect(userUiState.branch,userUiState.semester) {
+        if(userUiState.branch!="" && userUiState.semester.toInt()!=0)
+            studentViewModel.getAssignmentStudent(userUiState.branch,userUiState.semester)
     }
-    LaunchedEffect(mainAppUiState.callComplete,mainAppUiState.timeTableEntries ){
-        mainAppViewModel.getTimeTableEntries(studentUiState.branch, studentUiState.semester)
-        mainAppViewModel.setFalseCallComplete()
+    LaunchedEffect(studentUiState.callComplete,studentUiState.timeTableEntries ){
+        studentViewModel.getTimeTableEntries(userUiState.branch, userUiState.semester.toInt())
+        studentViewModel.setFalseCallComplete()
 
     }
-    val selectedDay = remember { mutableStateOf(studentUiState.daySelected) }
+    val selectedDay = remember { mutableStateOf(LocalDate.now().dayOfWeek.toString().lowercase().replaceFirstChar { it.uppercase()  }) }
 
-    LaunchedEffect(selectedDay.value){
-        studentViewModel.setDay(selectedDay.value)
-    }
+//    LaunchedEffect(selectedDay.value){
+//        studentViewModel.setDay(selectedDay.value)
+//    }
 
-    var selectedIndex by remember { mutableIntStateOf(studentUiState.screenOpened) }
+    var selectedIndex by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(selectedIndex){
-        studentViewModel.setScreen(selectedIndex)
-    }
+//    LaunchedEffect(selectedIndex){
+//        studentViewModel.setScreen(selectedIndex)
+//    }
 
     val items = listOf(
         Triple("Home", Icons.Outlined.Home, Icons.Default.Home),
@@ -149,95 +149,96 @@ fun MainLogic(navController: NavHostController,
                 })
         },
         topBar = {
-            if(selectedIndex==0) {
-                CustomTopBar(
-                    navController = navController,
-                    title = "EduSmart",
-                    canNavigateBack = false,
-                    userType = "Student",
-                )
-            }
-            else if(selectedIndex == 1){
-                TopAppBar(
-                    scrollBehavior = scrollBehaviorAttendance,
-                    title = {
-                        Text(text = "Attendance Tracker",
-                            fontSize = 35.sp)
-                    }
-                )
-            }
-            else if(selectedIndex==2){
-                TopAppBar(
-                    scrollBehavior = scrollBehaviorTasks,
-                    title = {
-                        Text(text = "Tasks",
-                            fontSize = 35.sp)
-                    }
-                )
-            }
-            else if(selectedIndex==3){
-                TopAppBar(
-                    scrollBehavior = scrollBehaviorTasks,
-                    title = {
-                        Text(text = "Chat Box",
-                            fontSize = 35.sp)
-                    },
-                    navigationIcon = {
-                        if (canNavigateBackChat) {
-                            IconButton(onClick = {
-                                chatBackPressed = true
-                            }) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back Arrow"
-                                )
+            when (selectedIndex) {
+                0 -> {
+                    CustomTopBar(
+                        navController = navController,
+                        title = "EduSmart",
+                        canNavigateBack = false,
+                        userType = "Student",
+                    )
+                }
+                1 -> {
+                    TopAppBar(
+                        scrollBehavior = scrollBehaviorAttendance,
+                        title = {
+                            Text(text = "Attendance Tracker",
+                                fontSize = 35.sp)
+                        }
+                    )
+                }
+                2 -> {
+                    TopAppBar(
+                        scrollBehavior = scrollBehaviorTasks,
+                        title = {
+                            Text(text = "Tasks",
+                                fontSize = 35.sp)
+                        }
+                    )
+                }
+                3 -> {
+                    TopAppBar(
+                        scrollBehavior = scrollBehaviorTasks,
+                        title = {
+                            Text(text = "Chat Box",
+                                fontSize = 35.sp)
+                        },
+                        navigationIcon = {
+                            if (canNavigateBackChat) {
+                                IconButton(onClick = {
+                                    chatBackPressed = true
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back Arrow"
+                                    )
+                                }
                             }
                         }
-                    }
-                )
-            }
-            else if(selectedIndex == 4){
-                TopAppBar(
-                    scrollBehavior=scrollBehaviorSettings,
-                    title = {
-                        Text(text = "Settings",
-                            fontSize = 35.sp)
-                    }
-                )
+                    )
+                }
+                4 -> {
+                    TopAppBar(
+                        scrollBehavior=scrollBehaviorSettings,
+                        title = {
+                            Text(text = "Settings",
+                                fontSize = 35.sp)
+                        }
+                    )
+                }
             }
         }
     ) {innerPadding->
         when(selectedIndex){
             0->HomeScreen(innerPadding = innerPadding,
                 selectedDay = selectedDay,
-                mainAppUiState = mainAppUiState,
+                studentUiState = studentUiState,
                 chatUiState = chatUiState,
-                mainAppViewModel=mainAppViewModel,
+                studentViewModel=studentViewModel,
                 userUiState=userUiState
                 ){index->
                 selectedIndex = index
             }
-            1-> AttendanceView(navController = navController,
-                innerPadding = innerPadding,
-                mainAppUiState = mainAppUiState,
-                studentViewModel = studentViewModel,
+            1-> AttendanceView(innerPadding = innerPadding,
                 studentUiState = studentUiState,
-                userUiState = userUiState,
-                mainAppViewModel = mainAppViewModel)
+                studentViewModel = studentViewModel,
+                userUiState = userUiState)
 
             2-> AssignmentScreen(innerPadding=innerPadding,
                 chatUiState = chatUiState,
                 chatViewModel = chatViewModel,
                 isStudent = true,
-                mainAppUiState = mainAppUiState,
-                mainAppViewModel = mainAppViewModel,
+                studentUiState = studentUiState,
+                studentViewModel = studentViewModel,
                 userUiState=userUiState,
+                teacherUiState = teacherUiState,
+                teacherViewModel = teacherViewModel,
                 navController=navController)
             3-> ChatScreen(
                 innerPadding = innerPadding,
                 isStudent = true,
-                mainAppViewModel =  mainAppViewModel,
-                mainAppUiState = mainAppUiState,
+                studentUiState =  studentUiState,
+                studentViewModel = studentViewModel,
                 chatViewModel = chatViewModel,
                 selectedChatType = selectedChatType,
                 canNavigateBack = {back->
@@ -246,7 +247,8 @@ fun MainLogic(navController: NavHostController,
                 },
                 onBackClick = chatBackPressed,
                 userUiState = userUiState,
-                studentUiState = studentUiState
+                teacherViewModel = teacherViewModel,
+                teacherUiState = teacherUiState
             )
 
             4-> SettingsScreen(innerPadding = innerPadding,
@@ -255,8 +257,7 @@ fun MainLogic(navController: NavHostController,
                 },
                 loginSignupViewModel = loginSignupViewModel,
                 navController = navController,
-                userUiState = userUiState,
-                loginUiState = loginUiState)
+                userUiState = userUiState)
         }
 
 
@@ -275,7 +276,7 @@ fun getBoxColor(text:String, time: String): Color {
 
     val colors = if(timeSub.isBefore(currentTime)) Color.Gray
     else if(text.contains("/")) Color.Magenta
-    else if(text.equals("Break")) Color.Blue
+    else if(text == "Break") Color.Blue
     else Color.Cyan
     return colors
 }

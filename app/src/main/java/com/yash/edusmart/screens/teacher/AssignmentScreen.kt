@@ -37,13 +37,14 @@ import com.yash.edusmart.screens.component.CustomDropdownMenu
 import com.yash.edusmart.screens.component.student.TaskAlert
 import com.yash.edusmart.viewmodel.ChatUiState
 import com.yash.edusmart.viewmodel.ChatViewModel
-import com.yash.edusmart.viewmodel.MainAppUiState
-import com.yash.edusmart.viewmodel.MainAppViewModel
+import com.yash.edusmart.viewmodel.StudentUiState
+import com.yash.edusmart.viewmodel.StudentViewModel
+import com.yash.edusmart.viewmodel.TeacherUiState
+import com.yash.edusmart.viewmodel.TeacherViewModel
 import com.yash.edusmart.viewmodel.UserUiState
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import kotlin.collections.emptyList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -52,15 +53,17 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                      chatUiState: ChatUiState,
                      chatViewModel: ChatViewModel,
                      isStudent: Boolean,
-                     mainAppUiState: MainAppUiState,
-                     mainAppViewModel: MainAppViewModel,
+                     studentUiState: StudentUiState,
+                     studentViewModel: StudentViewModel,
+                     teacherUiState: TeacherUiState,
+                     teacherViewModel: TeacherViewModel,
                      userUiState: UserUiState,
                      navController: NavHostController){
 
 
-    val branches by remember(mainAppUiState.branch) {
+    val branches by remember(teacherUiState.branch) {
         derivedStateOf {
-            mainAppUiState.branch.distinct()
+            teacherUiState.branch.distinct()
         }
     }
     val semester = listOf("1","2","3","4","5","6","7","8")
@@ -69,7 +72,7 @@ fun AssignmentScreen(innerPadding: PaddingValues,
 
     LaunchedEffect(branchSelected.value,semSelected.value){
         if(branchSelected.value!="Select Branch" && semSelected.value!="Select Semester"){
-            mainAppViewModel.getAssignmentsTeacher(branchSelected.value, semSelected.value)
+            teacherViewModel.getAssignmentsTeacher(branchSelected.value, semSelected.value)
         }
     }
 
@@ -84,8 +87,8 @@ fun AssignmentScreen(innerPadding: PaddingValues,
             assigns = chatUiState.assignments
         }
     }else{
-        LaunchedEffect(mainAppUiState.assignments) {
-            assignsT = mainAppUiState.assignments
+        LaunchedEffect(teacherUiState.assignments) {
+            assignsT = teacherUiState.assignments
         }
     }
 
@@ -104,14 +107,14 @@ fun AssignmentScreen(innerPadding: PaddingValues,
     PullToRefreshBox(
         state = pullState,
         onRefresh = {
-            if(isStudent) mainAppViewModel.getAssignmentStudent(userUiState.branch,userUiState.semester)
+            if(isStudent) studentViewModel.getAssignmentStudent(userUiState.branch,userUiState.semester)
             else{
                 if(branchSelected.value!="Select Branch" && semSelected.value!="Select Semester")
-                    mainAppViewModel.getAssignmentsTeacher(branchSelected.value,semSelected.value)
+                    teacherViewModel.getAssignmentsTeacher(branchSelected.value,semSelected.value)
             }
         },
         modifier = Modifier.padding(innerPadding),
-        isRefreshing = mainAppUiState.isLoading
+        isRefreshing = if(isStudent) studentUiState.isLoading else teacherUiState.isLoading
     ) {
         Box(
             modifier = Modifier
@@ -129,11 +132,11 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                             isStudent = true,
                             checked = checked,
                             onSubmit = {
-                                mainAppViewModel.markAssignment(a.id, userUiState.enroll)
+                                studentViewModel.markAssignment(a.id, userUiState.enroll)
                             },
                             onCheckedChange = {
                                 checked = !checked
-                                mainAppViewModel.updateIsCompleted(a.id, checked)
+                                studentViewModel.updateIsCompleted(a.id, checked)
                             }
                         )
                     }
@@ -161,7 +164,7 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                             isTeacher = true,
                             completedByNames = a.enroll,
                             onDeleteClick = {
-                                mainAppViewModel.deleteById(
+                                teacherViewModel.deleteById(
                                     id = a.id,
                                     branchSelected.value,
                                     semSelected.value

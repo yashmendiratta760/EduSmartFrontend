@@ -1,6 +1,5 @@
 package com.yash.edusmart.db
 
-import androidx.compose.runtime.internal.StabilityInferred
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 

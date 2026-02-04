@@ -1,8 +1,6 @@
 package com.yash.edusmart.screens.student
 
-import android.net.wifi.hotspot2.pps.HomeSp
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,9 +27,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -39,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yash.edusmart.api.AttendanceDTO
 import com.yash.edusmart.db.Assignments
 import com.yash.edusmart.screens.component.CustomDropdownMenu
 import com.yash.edusmart.screens.component.student.AttendanceAlert
@@ -47,12 +42,9 @@ import com.yash.edusmart.screens.component.student.ClassCountDown
 import com.yash.edusmart.screens.component.student.TaskAlert
 import com.yash.edusmart.screens.getBoxColor
 import com.yash.edusmart.viewmodel.ChatUiState
-import com.yash.edusmart.viewmodel.MainAppUiState
-import com.yash.edusmart.viewmodel.MainAppViewModel
 import com.yash.edusmart.viewmodel.StudentUiState
 import com.yash.edusmart.viewmodel.StudentViewModel
 import com.yash.edusmart.viewmodel.UserUiState
-import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -61,9 +53,9 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun HomeScreen(innerPadding: PaddingValues,
                selectedDay: MutableState<String>,
-               mainAppUiState: MainAppUiState,
                chatUiState: ChatUiState,
-               mainAppViewModel: MainAppViewModel,
+               studentUiState: StudentUiState,
+               studentViewModel: StudentViewModel,
                userUiState: UserUiState,
                selectedIndexSend:(Int)->Unit){
 
@@ -77,12 +69,12 @@ fun HomeScreen(innerPadding: PaddingValues,
 
 
 
-    val totalAttendance by remember(mainAppUiState.attendance) {
-        derivedStateOf { mainAppUiState.attendance.size }
+    val totalAttendance by remember(studentUiState.attendance) {
+        derivedStateOf { studentUiState.attendance.size }
     }
 
-    val presentAttendance by remember(mainAppUiState.attendance) {
-        derivedStateOf { mainAppUiState.attendance.count { it.status.equals("PRESENT", true) } }
+    val presentAttendance by remember(studentUiState.attendance) {
+        derivedStateOf { studentUiState.attendance.count { it.status.equals("PRESENT", true) } }
     }
 
     val attendancePercent by remember(totalAttendance, presentAttendance) {
@@ -96,9 +88,9 @@ fun HomeScreen(innerPadding: PaddingValues,
 
     val formatterTime = remember { DateTimeFormatter.ofPattern("HH:mm") }
 
-    val sortedEntries by remember(mainAppUiState.timeTableEntries, selectedDay.value) {
+    val sortedEntries by remember(studentUiState.timeTableEntries, selectedDay.value) {
         derivedStateOf {
-            mainAppUiState.timeTableEntries
+            studentUiState.timeTableEntries
                 .filter { it.day.equals(selectedDay.value, ignoreCase = true) }
                 .sortedBy { entry ->
                     runCatching {
@@ -124,11 +116,11 @@ fun HomeScreen(innerPadding: PaddingValues,
     PullToRefreshBox(
         state = pullState,
         onRefresh = {
-            mainAppViewModel.getAssignmentStudent(userUiState.branch,userUiState.semester)
-            mainAppViewModel.getAttendance(userUiState.email)
+            studentViewModel.getAssignmentStudent(userUiState.branch,userUiState.semester)
+            studentViewModel.getAttendance(userUiState.email)
         },
         modifier = Modifier.padding(innerPadding),
-        isRefreshing = mainAppUiState.isLoading
+        isRefreshing = studentUiState.isLoading
     ) {
         LazyColumn(
             modifier = Modifier

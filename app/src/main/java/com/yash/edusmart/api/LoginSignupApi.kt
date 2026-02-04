@@ -1,4 +1,4 @@
-package com.yash.edusmart.login_signup.api
+package com.yash.edusmart.api
 
 import retrofit2.Response
 import retrofit2.http.Body

@@ -1,7 +1,6 @@
 package com.yash.edusmart.screens.teacher
 
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -22,7 +21,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -43,8 +41,8 @@ import com.yash.edusmart.data.AttendanceStatus
 import com.yash.edusmart.navigation.Screens
 import com.yash.edusmart.screens.component.CustomDropdownMenu
 import com.yash.edusmart.screens.component.teacher.DatePickerMenu
-import com.yash.edusmart.viewmodel.MainAppUiState
-import com.yash.edusmart.viewmodel.MainAppViewModel
+import com.yash.edusmart.viewmodel.TeacherUiState
+import com.yash.edusmart.viewmodel.TeacherViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -52,15 +50,14 @@ import java.time.format.DateTimeFormatter
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AttendanceMarkScreen(innerPadding: PaddingValues,
-                         mainAppUiState: MainAppUiState,
-                         mainAppViewModel: MainAppViewModel,
-                         navController: NavHostController,
-                         scrollBehavior: TopAppBarScrollBehavior)
+                         teacherUiState: TeacherUiState,
+                         teacherViewModel: TeacherViewModel,
+                         navController: NavHostController, )
 {
 
     val context = LocalContext.current
     LaunchedEffect(Unit) {
-        mainAppViewModel.getAllBranch()
+        teacherViewModel.getAllBranch()
     }
 
 
@@ -81,16 +78,15 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
 
     LaunchedEffect(branchSelected.value,semSelected.value){
         if(branchSelected.value != "Select Branch" && semSelected.value != "Select Semester"){
-            mainAppViewModel.getStudentListTeacherAttendance(branch = branchSelected.value, semester = semSelected.value)
-            mainAppViewModel.getTimeTableByBranchAndSemesterTeacher(branch = branchSelected.value, semester = semSelected.value.toInt())
-            mainAppViewModel.getTimeTableEntries(branch = branchSelected.value, semester = semSelected.value.toInt())
-            Log.d("HITT",mainAppUiState.timeTableEntries.toString())
+            teacherViewModel.getStudentListTeacherAttendance(branch = branchSelected.value, semester = semSelected.value)
+            teacherViewModel.getTimeTableByBranchAndSemesterTeacher(branch = branchSelected.value, semester = semSelected.value.toInt())
+            teacherViewModel.getTimeTableEntries(branch = branchSelected.value, semester = semSelected.value.toInt())
         }
     }
 
-    val timeTableEntriesTimings by remember(selectedDayName,mainAppUiState.timeTableEntries) {
+    val timeTableEntriesTimings by remember(selectedDayName,teacherUiState.timeTableEntries) {
         derivedStateOf {
-            mainAppUiState.timeTableEntries
+            teacherUiState.timeTableEntries
                 .filter { it.day.equals(selectedDayName, ignoreCase = true) }
                 .sortedBy { it.timing }
                 .map { it.timing }
@@ -101,10 +97,10 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
 
     val attendanceListBool = remember { mutableStateListOf<StudentAttendance>() }
 
-    LaunchedEffect(mainAppUiState.studentDataAttendance) {
+    LaunchedEffect(teacherUiState.studentDataAttendance) {
         attendanceListBool.clear()
         attendanceListBool.addAll(
-            mainAppUiState.studentDataAttendance.map { student ->
+            teacherUiState.studentDataAttendance.map { student ->
                 StudentAttendance(student.email, null,student.name)
             }
         )
@@ -113,18 +109,18 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
 
     val subjectName by remember(selectedTiming.value,
         selectedDayName,
-        mainAppUiState.timeTableEntries) {
+        teacherUiState.timeTableEntries) {
         derivedStateOf {
-            mainAppUiState.timeTableEntries.firstOrNull {
+            teacherUiState.timeTableEntries.firstOrNull {
                 it.timing == selectedTiming.value &&
                         it.day.equals(selectedDayName, ignoreCase = true)
             }?.subject ?: "Subject Name"
         }
     }
 //    Log.d("TEACHER 2",timeTableEntriesTimings.firstOrNull() ?:"NULL@@")
-    val branches by remember(mainAppUiState.branch) {
+    val branches by remember(teacherUiState.branch) {
         derivedStateOf {
-            mainAppUiState.branch.distinct()
+            teacherUiState.branch.distinct()
         }
     }
     val semester = listOf("1","2","3","4","5","6","7","8")
@@ -227,7 +223,7 @@ fun AttendanceMarkScreen(innerPadding: PaddingValues,
                             Toast.makeText(context, "Mark at least one student", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
-                        mainAppViewModel.uploadAttendance(
+                        teacherViewModel.uploadAttendance(
                             attendanceList = attendanceList,
                             time = selectedTiming.value,
                             branch = branchSelected.value,

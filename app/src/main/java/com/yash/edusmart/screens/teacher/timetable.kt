@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -31,8 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yash.edusmart.screens.component.CustomDropdownMenu
 import com.yash.edusmart.screens.getBoxColor
-import com.yash.edusmart.viewmodel.MainAppUiState
-import com.yash.edusmart.viewmodel.MainAppViewModel
+import com.yash.edusmart.viewmodel.TeacherUiState
+import com.yash.edusmart.viewmodel.TeacherViewModel
 import com.yash.edusmart.viewmodel.UserUiState
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -41,15 +40,13 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TimeTableTeacher(innerPadding: PaddingValues,
                      selectedDay: MutableState<String>,
-                     mainAppUiState: MainAppUiState,
-                     mainAppViewModel: MainAppViewModel,
-                     userUiState: UserUiState){
+                     teacherUiState: TeacherUiState){
     val formatterTime = remember { DateTimeFormatter.ofPattern("HH:mm") }
 //    LaunchedEffect(mainAppUiState.timeTableTeacher) {
 //        mainAppViewModel.getTimeTableTeacher(userUiState.email)
 //    }
-    val sortedEntries = remember(mainAppUiState.timeTableTeacher) {
-        mainAppUiState.timeTableTeacher
+    val sortedEntries = remember(teacherUiState.timeTableTeacher) {
+        teacherUiState.timeTableTeacher
         .filter { it.day.uppercase() == selectedDay.value.uppercase() }
         .sortedBy { entry ->
             try {

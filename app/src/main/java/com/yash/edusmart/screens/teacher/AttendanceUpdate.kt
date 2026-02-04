@@ -1,14 +1,8 @@
 package com.yash.edusmart.screens.teacher
 
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -37,29 +30,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.yash.edusmart.data.AttendanceStatus
-import com.yash.edusmart.navigation.Screens
 import com.yash.edusmart.screens.component.CustomDropdownMenu
-import com.yash.edusmart.screens.component.CustomTopBar
 import com.yash.edusmart.screens.component.teacher.DatePickerMenu
-import com.yash.edusmart.viewmodel.MainAppUiState
-import com.yash.edusmart.viewmodel.MainAppViewModel
+import com.yash.edusmart.viewmodel.TeacherUiState
+import com.yash.edusmart.viewmodel.TeacherViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AttendanceUpdate(mainAppUiState: MainAppUiState,
-                     mainAppViewModel: MainAppViewModel,
+fun AttendanceUpdate(teacherUiState: TeacherUiState,
+                     teacherViewModel: TeacherViewModel,
                      navController: NavHostController){
     val context = LocalContext.current
-    LaunchedEffect(mainAppViewModel) {
-        mainAppViewModel.toastEvent.collect {
+    LaunchedEffect(teacherViewModel) {
+        teacherViewModel.toastEvent.collect {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
@@ -77,9 +66,9 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
             date.dayOfWeek.name.uppercase()// "Monday"
         }
     }
-    val timeTableEntriesTimings by remember(selectedDayName, mainAppUiState.timeTableEntries) {
+    val timeTableEntriesTimings by remember(selectedDayName, teacherUiState.timeTableEntries) {
         derivedStateOf {
-            mainAppUiState.timeTableEntries
+            teacherUiState.timeTableEntries
                 .filter { it.day.equals(selectedDayName, ignoreCase = true) }
                 .sortedBy { it.timing }
                 .map { it.timing }
@@ -92,23 +81,21 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
 
 
     LaunchedEffect(branchSelected.value, semSelected.value) {
-        Log.d("HITT",mainAppUiState.timeTableEntries.toString())
         val semInt = semSelected.value.toIntOrNull()
         if (branchSelected.value == "Select Branch" || semInt == null) return@LaunchedEffect
 
-        mainAppViewModel.getStudentListTeacherAttendance(branchSelected.value, semSelected.value)
+        teacherViewModel.getStudentListTeacherAttendance(branchSelected.value, semSelected.value)
 
-        mainAppViewModel.getTimeTableByBranchAndSemesterTeacher(branchSelected.value, semInt)
-        mainAppViewModel.getTimeTableEntries(branchSelected.value, semInt)
+        teacherViewModel.getTimeTableByBranchAndSemesterTeacher(branchSelected.value, semInt)
+        teacherViewModel.getTimeTableEntries(branchSelected.value, semInt)
 
-        Log.d("HITT",mainAppUiState.timeTableEntries.toString())
     }
 
     val attendanceListBool = remember { mutableStateListOf<Pair<String,String>>() }
-    LaunchedEffect(mainAppUiState.studentDataAttendance) {
+    LaunchedEffect(teacherUiState.studentDataAttendance) {
         attendanceListBool.clear()
         attendanceListBool.addAll(
-            mainAppUiState.studentDataAttendance.map { student ->
+            teacherUiState.studentDataAttendance.map { student ->
                 Pair(student.name,student.email)
             }
         )
@@ -117,19 +104,19 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
     val subjectName by remember(
         selectedTiming.value,
         selectedDayName,
-        mainAppUiState.timeTableEntries
+        teacherUiState.timeTableEntries
     ) {
         derivedStateOf {
-            mainAppUiState.timeTableEntries.firstOrNull {
+            teacherUiState.timeTableEntries.firstOrNull {
                 it.timing == selectedTiming.value &&
                         it.day.equals(selectedDayName, ignoreCase = true)
             }?.subject ?: "Subject Name"
         }
     }
 
-    val branches by remember(mainAppUiState.branch){
+    val branches by remember(teacherUiState.branch){
         derivedStateOf {
-            mainAppUiState.branch.distinct()
+            teacherUiState.branch.distinct()
         }
     }
     val semester = listOf("1","2","3","4","5","6","7","8")
@@ -222,7 +209,7 @@ fun AttendanceUpdate(mainAppUiState: MainAppUiState,
                             )
                         )
 
-                        mainAppViewModel.uploadAttendance(
+                        teacherViewModel.uploadAttendance(
                             attendanceList = attendanceList,
                             time = selectedTiming.value,
                             branch = branchSelected.value,

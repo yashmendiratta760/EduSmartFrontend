@@ -3,8 +3,6 @@ package com.yash.edusmart.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yash.edusmart.api.ChatEntity
-import com.yash.edusmart.api.MainAppApi
 import com.yash.edusmart.data.AssignmentDTO
 import com.yash.edusmart.data.ChatMessage
 import com.yash.edusmart.db.Assignments
@@ -12,6 +10,8 @@ import com.yash.edusmart.db.ChatEntries
 import com.yash.edusmart.repository.AssignmentLocalRepo
 import com.yash.edusmart.repository.ChatLocalDbRepo
 import com.yash.edusmart.repository.ContextRepo
+import com.yash.edusmart.repository.StudentApiRepo
+import com.yash.edusmart.repository.TeacherApiRepo
 import com.yash.edusmart.services.SocketService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -22,10 +22,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -44,7 +42,8 @@ class ChatViewModel @Inject constructor(
     private val chatLocalDbRepo: ChatLocalDbRepo,
     private val contextRepo: ContextRepo,
     private val assignmentLocalRepo: AssignmentLocalRepo,
-    private val mainAppApi: MainAppApi
+    private val teacherApiRepo: TeacherApiRepo,
+    private val studentApiRepo: StudentApiRepo
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -79,20 +78,16 @@ class ChatViewModel @Inject constructor(
         contextRepo.getUserType()      // Flow<Boolean?>
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val email: StateFlow<String?> =
-        contextRepo.getEmail()        // Flow<Boolean?>
-            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
 
     init {
         viewModelScope.launch {
-            combine(userType, isLoggedIn, email) { type, logged, em ->
-                Triple(type, logged, em)
+            combine(userType, isLoggedIn) { type, logged ->
+                Pair(type, logged)
             }
                 .distinctUntilChanged()
-                .collect { (type, logged, em) ->
+                .collect { (type, logged) ->
                     if (logged != true) return@collect
-                    if (type.isNullOrBlank() || em.isNullOrBlank()) return@collect
+                    if (type.isNullOrBlank()) return@collect
 
                     if (type == "STUDENT") {
                         val branch = contextRepo.getBranch().filterNotNull().first()
@@ -100,7 +95,7 @@ class ChatViewModel @Inject constructor(
                         _uiState.update { it.copy(branch = branch, sem = sem) }
                         start("$branch $sem")
                     } else if (type == "TEACHER") {
-                        startTeacher(em)   // ✅ pass String email
+                        startTeacher()   // ✅ pass String email
                     }
                 }
         }
@@ -117,7 +112,7 @@ class ChatViewModel @Inject constructor(
         )
 
 
-    suspend fun startTeacher(email: String) {
+    suspend fun startTeacher() {
         val token = contextRepo.getToken().firstOrNull().orEmpty()
         if (token.isBlank()) return
 
@@ -314,7 +309,7 @@ class ChatViewModel @Inject constructor(
                 val sem = contextRepo.getSemester().filterNotNull().first()
                 val groupId = "$branch $sem"
 
-                val res = mainAppApi.getGroupMessages(branch, sem)
+                val res = studentApiRepo.getStudentGroupMessages(branch,sem)
                 if (!res.isSuccessful) return@launch
 
                 val serverList = res.body().orEmpty().sortedBy { it.timeStamp }
@@ -349,7 +344,7 @@ class ChatViewModel @Inject constructor(
             try {
                 val myEmail = contextRepo.getEmail().filterNotNull().first()
 
-                val res = mainAppApi.getPrivateConversation(
+                val res = studentApiRepo.getStudentPrivateConversation(
                     email = myEmail,
                     receiverEmail = otherEmail
                 )
@@ -399,7 +394,7 @@ class ChatViewModel @Inject constructor(
             try {
                 val groupId = "$branch $sem"
 
-                val res = mainAppApi.getGroupMessagesTeacher(branch, sem)
+                val res = teacherApiRepo.getTeacherGroupMessages(branch, sem)
                 if (!res.isSuccessful) return@launch
 
                 val serverList = res.body().orEmpty().sortedBy { it.timeStamp }
@@ -434,7 +429,7 @@ class ChatViewModel @Inject constructor(
             try {
                 val myEmail = contextRepo.getEmail().filterNotNull().first()
 
-                val res = mainAppApi.getPrivateConversationTeacher(
+                val res = teacherApiRepo.getTeacherPrivateConversation(
                     email = myEmail,
                     receiverEmail = otherEmail
                 )

@@ -1,23 +1,14 @@
 package com.yash.edusmart.api
 
-import android.icu.util.LocaleData
-import androidx.compose.ui.graphics.LinearGradient
-import com.yash.edusmart.data.AssignmentGetDTO
-import com.yash.edusmart.data.AttendanceUploadDTO
 import com.yash.edusmart.data.TimeTableEntry
-import com.yash.edusmart.db.Assignments
-import com.yash.edusmart.db.TimeTableDTO
-import com.yash.edusmart.db.TimeTableEntries
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Query
-import java.time.LocalDate
-import java.util.Locale
 
-interface MainAppApi
+interface StudentApi
 {
 
     @GET("/student/getHolidays")
@@ -28,30 +19,13 @@ interface MainAppApi
         @Query("semester") semester: String
     ): Response<List<TimeTableEntry>>
 
-    @GET("/teacher/getTimeTableByDay")
-    suspend fun getTimeTableByBranchAndSemesterTeacher(
-        @Query("branch") branch: String,
-        @Query("semester") semester: String
-    ): Response<List<TimeTableEntry>>
-
     @GET("/student/getAttendance")
     suspend fun getAttendance(
         @Query("email") email: String
     ): Response<List<AttendanceDTO>>
 
-    @POST("/teacher/uploadAttendance")
-    suspend fun uploadAttendance(
-        @Body attendanceUploadDTO: AttendanceUploadDTO
-    ): Response<String>
-
     @POST("/student/getStudentsList")
     suspend fun getStudentsByBranchAndSemester(
-        @Body studentsListDTO : StudentsListDTO
-    ): Response<List<StudentData>>
-
-
-    @POST("/teacher/getStudentsListTeacher")
-    suspend fun getStudentsByBranchAndSemesterTeacher(
         @Body studentsListDTO : StudentsListDTO
     ): Response<List<StudentData>>
 
@@ -60,15 +34,6 @@ interface MainAppApi
         @Query("branch") branch: String,
         @Query("semester")semester: String
     ): Response<List<String>>
-
-    @GET("/teacher/getAllBranch")
-    suspend fun getAllBranch(): Response<List<String>>
-
-    @GET("/teacher/getAllAssignmentsByBranchAndSem")
-    suspend fun getAllAssignTeacher(
-        @Query("branch") branch: String,
-        @Query("sem") sem: String
-    ): Response<List<AssignmentGetDTO>>
 
     @GET("/student/getAllAssignmentsByBranchAndSem")
     suspend fun getAllAssign(
@@ -80,16 +45,6 @@ interface MainAppApi
     suspend fun markAssignment(
         @Query("idAss") idAss: Long,
         @Query("enroll")enroll: String
-    ): Response<String>
-
-    @GET("/teacher/getMyTImeTable")
-    suspend fun getTeacherTimeTable(
-        @Query("email") email : String
-    ): Response<List<TimeTableEntry>>
-
-    @PUT("/teacher/deleteAssignment")
-    suspend fun deleteAssignment(
-        @Query("id") id: Long
     ): Response<String>
 
     @GET("/student/getMessagesByBranchAndSem")
@@ -109,24 +64,13 @@ interface MainAppApi
         @Body chatEntity: ChatEntity
     ): Response<String>
 
-    @GET("/teacher/getMessagesByBranchAndSem")
-    suspend fun getGroupMessagesTeacher(
-        @Query("branch") branch: String,
-        @Query("sem") sem: String
-    ): Response<List<ChatEntity>>
-
-    // /teacher/getPvtMsg?email=a&receiverEmail=b
-    @GET("/teacher/getPvtMsg")
-    suspend fun getPrivateConversationTeacher(
-        @Query("email") email: String,
-        @Query("receiverEmail") receiverEmail: String
-    ): Response<List<ChatEntity>>
-
     @GET("/student/getAllTeachers")
     suspend fun getAllTeacher(
         @Query("branch") branch: String,
         @Query("sem") sem: String
     ): Response<List<TeacherDTO>>
+
+
 
 
 

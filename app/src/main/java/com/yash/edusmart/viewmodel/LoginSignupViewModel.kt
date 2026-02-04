@@ -1,17 +1,14 @@
 package com.yash.edusmart.viewmodel
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yash.edusmart.login_signup.api.OtpData
-import com.yash.edusmart.login_signup.api.TokenData
-import com.yash.edusmart.login_signup.api.UserDTO
+import com.yash.edusmart.api.OtpData
+import com.yash.edusmart.api.TokenData
+import com.yash.edusmart.api.UserDTO
 import com.yash.edusmart.repository.LoginSignupRepository
 import com.google.gson.Gson
 import com.yash.edusmart.repository.ContextRepo
-import com.yash.edusmart.services.TokenManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -82,7 +82,7 @@ class AssignmentLocalRepoImpl @Inject constructor(private val assignmentDao: Ass
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class assRepo{
+abstract class AssRepo{
     @Binds
     @Singleton
     abstract fun provideRepo(repo: AssignmentLocalRepoImpl): AssignmentLocalRepo

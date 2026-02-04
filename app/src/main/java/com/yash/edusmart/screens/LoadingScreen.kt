@@ -14,18 +14,16 @@ import androidx.navigation.NavHostController
 import com.yash.edusmart.navigation.Screens
 import com.yash.edusmart.services.TokenManager
 import com.yash.edusmart.viewmodel.ChatViewModel
-import com.yash.edusmart.viewmodel.MainAppViewModel
 import com.yash.edusmart.viewmodel.StudentViewModel
-import com.yash.edusmart.viewmodel.UserViewModel
+import com.yash.edusmart.viewmodel.TeacherViewModel
 import kotlinx.coroutines.flow.first
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LoadingScreen(navController: NavHostController,
-                  mainAppViewModel: MainAppViewModel,
+                  teacherViewModel: TeacherViewModel,
                   chatViewModel: ChatViewModel,
-                  studentViewModel: StudentViewModel,
-                  userViewModel: UserViewModel)
+                  studentViewModel: StudentViewModel)
 {
     val context = LocalContext.current
 
@@ -42,33 +40,27 @@ fun LoadingScreen(navController: NavHostController,
             return@LaunchedEffect
         }
 
-        if(token!=null) {
-            chatViewModel.getAssignments()
-            when (userType) {
-                "STUDENT" -> {
-                    studentViewModel.getHolidaysServer()
-                    navController.navigate(Screens.Student.name) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-
-                "TEACHER" -> {
-                    mainAppViewModel.getAllBranch()
-                    if(email!=null)  mainAppViewModel.getTimeTableTeacher(email)
-                    navController.navigate(Screens.Teacher.name) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-
-                else -> {
-                    navController.navigate(Screens.Login.name) {
-                        popUpTo(0) { inclusive = true }
-                    }
+        chatViewModel.getAssignments()
+        when (userType) {
+            "STUDENT" -> {
+                studentViewModel.getHolidaysServer()
+                navController.navigate(Screens.Student.name) {
+                    popUpTo(0) { inclusive = true }
                 }
             }
-        }else{
-            navController.navigate(Screens.Login.name) {
-                popUpTo(0) { inclusive = true }
+
+            "TEACHER" -> {
+                teacherViewModel.getAllBranch()
+                if(email!=null)  teacherViewModel.getTimeTableTeacher(email)
+                navController.navigate(Screens.Teacher.name) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+
+            else -> {
+                navController.navigate(Screens.Login.name) {
+                    popUpTo(0) { inclusive = true }
+                }
             }
         }
 

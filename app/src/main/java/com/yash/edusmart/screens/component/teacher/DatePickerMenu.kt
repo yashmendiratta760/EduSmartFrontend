@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.yash.edusmart.viewmodel.MainAppUiState
 import java.time.*
 import java.time.format.DateTimeFormatter
 
