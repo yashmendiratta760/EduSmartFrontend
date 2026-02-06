@@ -5,6 +5,8 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yash.edusmart.api.AttendanceDTO
+import com.yash.edusmart.api.PresignDownloadRequest
+import com.yash.edusmart.api.PresignDownloadResponse
 import com.yash.edusmart.api.StudentsListDTO
 import com.yash.edusmart.db.Assignments
 import com.yash.edusmart.db.TimeTableDTO
@@ -179,7 +181,8 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
                             enrollCom = emptyList(),
                             task = it.assignment,
                             deadline = it.deadline,
-                            isCompleted = false
+                            isCompleted = false,
+                            path = it.path
                         )
                     }
                     syncAssignments(latest)
@@ -190,6 +193,18 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
             )
         }
     }
+    suspend fun preResponseDownload(response: PresignDownloadRequest): PresignDownloadResponse{
+
+        val res = studentApiRepo.preSignDownload(response)
+        if (!res.isSuccessful) {
+            val err = res.errorBody()?.string()
+            throw RuntimeException("presignUpload failed: ${res.code()} ${res.message()} body=$err")
+        }
+
+        return res.body()
+            ?: throw RuntimeException("presignUpload success but body is null (converter/model mismatch?)")
+    }
+
 
 
 

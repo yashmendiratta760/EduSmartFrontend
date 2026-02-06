@@ -4,9 +4,10 @@ import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,18 +34,23 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.yash.edusmart.api.PresignUploadRequest
 import com.yash.edusmart.data.AssignmentDTO
+import com.yash.edusmart.helper.queryDisplayName
+import com.yash.edusmart.helper.uploadToSignedUrl
 import com.yash.edusmart.screens.component.CustomDropdownMenu
 import com.yash.edusmart.viewmodel.ChatViewModel
 import com.yash.edusmart.viewmodel.TeacherUiState
 import com.yash.edusmart.viewmodel.TeacherViewModel
 import com.yash.edusmart.viewmodel.UserUiState
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -60,7 +67,23 @@ fun AssignmentUploadDataScreen(
     teacherViewModel: TeacherViewModel
 ) {
 
+
+
+
     val context = LocalContext.current
+    var pickedUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var isUploading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var selectedFileName by remember { mutableStateOf<String>("Select File") }
+    val pickFile = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            pickedUri = uri
+            selectedFileName = queryDisplayName(context, uri)
+        }
+    }
+
     LaunchedEffect(chatViewModel) {
         chatViewModel.toastEvent.collect {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
@@ -74,6 +97,7 @@ fun AssignmentUploadDataScreen(
     var head by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+
     val branches by remember(teacherUiState.branch){
         derivedStateOf {
             teacherUiState.branch.distinct()
@@ -184,33 +208,91 @@ fun AssignmentUploadDataScreen(
 
                 )
 
+                OutlinedTextField(
+                    value = selectedFileName,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            pickFile.launch(arrayOf(
+                                "application/pdf",
+                                "image/*",
+                                "application/msword",
+                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            ))
+                        }) {
+                            Icon(
+                                Icons.Default.Attachment,
+                                contentDescription = "Attachment",
+                            )
+                        }
+                    },
+                    label = { Text("Deadline Date") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+
+                )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
                     onClick = {
-                        selectedDate?.let { date ->
-                            val deadlineMillis = date
-                                .atStartOfDay(ZoneId.systemDefault())
-                                .toInstant()
-                                .toEpochMilli()
-                            val task = "($head)$description"
-                            chatViewModel.sendAssignment(
-                                message = AssignmentDTO(
-                                    sender = userUiState.email,
-                                    receiver = batch.value + " " + sem.value,
-                                    task = task,
-                                    deadline = deadlineMillis
-                                ),
-                                groupId = batch.value + " " + sem.value
-                            )
-                        }
+                        val date = selectedDate ?: return@Button
+                        val deadlineMillis = date
+                            .atStartOfDay(ZoneId.systemDefault())
+                            .toInstant()
+                            .toEpochMilli()
 
-                        navController.popBackStack()
+                        val task = "($head)$description"
+                        val group = batch.value + " " + sem.value
+
+                        scope.launch {
+                            try {
+                                val uri = pickedUri
+                                var attachmentPath: String? = null
+                                isUploading = true
+
+                                // 1) If file picked -> presign + upload to Supabase
+                                val presign = teacherViewModel.presignUploadSuspend(
+                                    PresignUploadRequest(fileName = selectedFileName)
+                                )
+
+                                // 2) upload bytes to signed URL (UI has context/uri)
+                                val supabaseBaseUrl = "https://ukaftdwlcwjbustjuczm.supabase.co/storage/v1"
+
+                                uploadToSignedUrl(
+                                    context = context,
+                                    uri = uri!!,
+                                    fullUploadUrl = supabaseBaseUrl + presign.uploadUrl
+                                )
+
+                                // 3) permanent path
+                                attachmentPath = presign.path
+
+                                // 2) Send assignment through WS (same as now)
+                                chatViewModel.sendAssignment(
+                                    message = AssignmentDTO(
+                                        sender = userUiState.email,
+                                        receiver = group,
+                                        task = task,
+                                        deadline = deadlineMillis,
+                                        path = attachmentPath
+                                    ),
+                                    groupId = group
+                                )
+
+                                navController.popBackStack()
+                            } catch (e: Exception) {
+                                Toast.makeText(context, e.message ?: "Upload failed", Toast.LENGTH_SHORT).show()
+                            } finally {
+                                isUploading = false
+                            }
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = description.isNotBlank() && selectedDate != null
+                    enabled = description.isNotBlank() && selectedDate != null && !isUploading
                 ) {
-                    Text("Submit Assignment")
+                    Text(if (isUploading) "Uploading..." else "Submit Assignment")
                 }
             }
         }

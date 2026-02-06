@@ -70,6 +70,11 @@ interface StudentApi
         @Query("sem") sem: String
     ): Response<List<TeacherDTO>>
 
+    @POST("/student/presign-download")
+    suspend fun preSignDownload(
+        @Body request: PresignDownloadRequest
+    ): Response<PresignDownloadResponse>
+
 
 
 
@@ -102,7 +107,8 @@ data class AssignmentStudent(
     val branch: String,
     val sem: String,
     val assignment: String,
-    val deadline: Long
+    val deadline: Long,
+    val path: String
 )
 
 data class StudentData(

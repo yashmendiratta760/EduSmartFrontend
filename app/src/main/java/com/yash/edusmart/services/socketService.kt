@@ -23,7 +23,7 @@ fun isEmulator(): Boolean {
 
 fun getWebSocketUrl(): String {
     return "https://edusmartbackend-z95q.onrender.com/ws/websocket"
-//    return if (isEmulator()) "http://10.0.2.2:8080/ws/websocket" else "http://192.168.0.102:8080/ws/websocket"
+//    return if (isEmulator()) "http://10.0.2.2:8080/ws/websocket" else "http://192.168.0.103:8080/ws/websocket"
 }
 
 

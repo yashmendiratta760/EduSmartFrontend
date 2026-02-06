@@ -6,5 +6,6 @@ data class AssignmentGetDTO(
     var deadline: Long,
     var enroll: List<String>,
     var branch: String,
-    var sem: String
+    var sem: String,
+    val path: String
 )

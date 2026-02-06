@@ -1,4 +1,4 @@
-package com.yash.edusmart.repository
+package com.yash.edusmart.helper
 
 object TokenHolder
 {

@@ -4,5 +4,6 @@ data class AssignmentDTO(
     val sender: String,
     val receiver: String,
     val task: String,
-    val deadline: Long
+    val deadline: Long,
+    val path: String
 )

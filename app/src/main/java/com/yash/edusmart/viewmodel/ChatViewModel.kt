@@ -180,7 +180,8 @@ class ChatViewModel @Inject constructor(
                     deadline = msg.deadline,
                     branch = parts.getOrNull(0) ?: "",
                     sem = parts.getOrNull(1) ?: "",
-                    isCompleted = false
+                    isCompleted = false,
+                    path = msg.path
                 )
             )
         })
@@ -258,7 +259,8 @@ class ChatViewModel @Inject constructor(
                         enrollCom = emptyList(),
                         task = message.task,
                         deadline = message.deadline,
-                        isCompleted = false
+                        isCompleted = false,
+                        path = message.path
                     )
                 )
             } catch (e: Exception) {

@@ -46,6 +46,7 @@ fun TaskAlert(
     onCheckedChange: (Boolean) -> Unit = {},
     onSubmit: () -> Unit = {},
     canSubmit: Boolean=false,
+    onAtClick :()-> Unit={},
     onDeleteClick: () -> Unit = {}
 ) {
 
@@ -97,6 +98,8 @@ fun TaskAlert(
             )
 
 
+
+
             Text(
                 text = task,
                 fontSize = 20.sp,
@@ -104,6 +107,12 @@ fun TaskAlert(
                 modifier = Modifier
                     .padding(top = 10.dp)
             )
+
+            Text(text = "Attancement", modifier = Modifier.clickable(
+                onClick = {
+                    onAtClick()
+                }
+            ))
 
             if (isStudent) {
                 Row(

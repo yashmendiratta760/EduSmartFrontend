@@ -60,4 +60,30 @@ interface TeacherApi{
         @Query("receiverEmail") receiverEmail: String
     ): Response<List<ChatEntity>>
 
+    @POST("/teacher/presign-upload")
+    suspend fun preSignUpload(
+        @Body request: PresignUploadRequest
+    ): Response<PresignUploadResponse>
+
+    @POST("/teacher/presign-download")
+    suspend fun preSignDownload(
+        @Body req: PresignDownloadRequest
+    ): Response<PresignDownloadResponse>
+
 }
+
+data class PresignUploadRequest(
+    val fileName: String
+)
+
+data class PresignUploadResponse(
+    val path: String,
+    val uploadUrl: String
+)
+
+data class PresignDownloadRequest (
+    val path: String
+)
+data class PresignDownloadResponse (
+    val path: String
+)

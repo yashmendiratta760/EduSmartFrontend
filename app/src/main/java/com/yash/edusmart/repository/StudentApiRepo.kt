@@ -4,6 +4,8 @@ import com.yash.edusmart.api.AssignmentStudent
 import com.yash.edusmart.api.AttendanceDTO
 import com.yash.edusmart.api.ChatEntity
 import com.yash.edusmart.api.HolidayEntity
+import com.yash.edusmart.api.PresignDownloadRequest
+import com.yash.edusmart.api.PresignDownloadResponse
 import com.yash.edusmart.api.StudentApi
 import com.yash.edusmart.api.StudentData
 import com.yash.edusmart.api.StudentsListDTO
@@ -14,6 +16,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Response
+import retrofit2.http.Body
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -69,6 +72,10 @@ interface StudentApiRepo
     suspend fun getAllTeacher(
         branch: String, sem: String
     ): Response<List<TeacherDTO>>
+
+    suspend fun preSignDownload(
+        @Body request: PresignDownloadRequest
+    ): Response<PresignDownloadResponse>
 }
 
 class StudentApiRepoImpl @Inject constructor(private val studentApi: StudentApi): StudentApiRepo
@@ -141,6 +148,10 @@ class StudentApiRepoImpl @Inject constructor(private val studentApi: StudentApi)
         sem: String
     ): Response<List<TeacherDTO>> {
         return studentApi.getAllTeacher(branch,sem)
+    }
+
+    override suspend fun preSignDownload(request: PresignDownloadRequest): Response<PresignDownloadResponse> {
+        return studentApi.preSignDownload(request)
     }
 }
 

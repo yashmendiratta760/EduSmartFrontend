@@ -11,5 +11,6 @@ data class Assignments(
     val enrollCom:List<String>,
     val task: String,
     val deadline: Long,
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    val path: String
 )

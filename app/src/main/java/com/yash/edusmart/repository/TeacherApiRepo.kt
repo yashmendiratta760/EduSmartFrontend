@@ -1,6 +1,10 @@
 package com.yash.edusmart.repository
 
 import com.yash.edusmart.api.ChatEntity
+import com.yash.edusmart.api.PresignDownloadRequest
+import com.yash.edusmart.api.PresignDownloadResponse
+import com.yash.edusmart.api.PresignUploadRequest
+import com.yash.edusmart.api.PresignUploadResponse
 import com.yash.edusmart.api.StudentData
 import com.yash.edusmart.api.StudentsListDTO
 import com.yash.edusmart.api.TeacherApi
@@ -12,6 +16,8 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Response
+import retrofit2.http.Body
+import retrofit2.http.POST
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,6 +39,15 @@ interface TeacherApiRepo {
     suspend fun getTeacherGroupMessages(branch: String, sem: String): Response<List<ChatEntity>>
 
     suspend fun getTeacherPrivateConversation(email: String, receiverEmail: String): Response<List<ChatEntity>>
+
+    suspend fun preSignUpload(
+        request: PresignUploadRequest
+    ): Response<PresignUploadResponse>
+
+    @POST("/teacher/presign-download")
+    suspend fun preSignDownload(
+       request: PresignDownloadRequest
+    ): Response<PresignDownloadResponse>
 }
 class TeacherApiRepoImpl @Inject constructor(private val teacherApi: TeacherApi): TeacherApiRepo{
     override suspend fun uploadAttendance(attendanceUploadDTO: AttendanceUploadDTO): Response<String> {
@@ -81,6 +96,14 @@ class TeacherApiRepoImpl @Inject constructor(private val teacherApi: TeacherApi)
         receiverEmail: String
     ): Response<List<ChatEntity>> {
         return teacherApi.getPrivateConversationTeacher(email,receiverEmail)
+    }
+
+    override suspend fun preSignUpload(request: PresignUploadRequest): Response<PresignUploadResponse> {
+        return teacherApi.preSignUpload(request)
+    }
+
+    override suspend fun preSignDownload(request: PresignDownloadRequest): Response<PresignDownloadResponse> {
+        return teacherApi.preSignDownload(request)
     }
 
 }

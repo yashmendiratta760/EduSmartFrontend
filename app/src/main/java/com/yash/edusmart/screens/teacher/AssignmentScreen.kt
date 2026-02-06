@@ -1,6 +1,10 @@
 package com.yash.edusmart.screens.teacher
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,12 +28,15 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.yash.edusmart.api.PresignDownloadRequest
 import com.yash.edusmart.data.AssignmentGetDTO
 import com.yash.edusmart.db.Assignments
 import com.yash.edusmart.navigation.Screens
@@ -42,6 +49,7 @@ import com.yash.edusmart.viewmodel.StudentViewModel
 import com.yash.edusmart.viewmodel.TeacherUiState
 import com.yash.edusmart.viewmodel.TeacherViewModel
 import com.yash.edusmart.viewmodel.UserUiState
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -59,8 +67,8 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                      teacherViewModel: TeacherViewModel,
                      userUiState: UserUiState,
                      navController: NavHostController){
-
-
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val branches by remember(teacherUiState.branch) {
         derivedStateOf {
             teacherUiState.branch.distinct()
@@ -125,6 +133,7 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                         val task = match?.groupValues[1]?:"Hello".trim().replaceFirstChar { it.uppercase() }
                         val desc = match?.groupValues[2]?:"Hello".trim()
                         val deadlineDate = a.deadline.toLocalDate()
+                        Log.e("URI",a.path)
                         val deadlineText = if (deadlineDate.isBefore(today)) "Expired"
                         else chatViewModel.formatDate(a.deadline)
                         TaskAlert(
@@ -132,6 +141,29 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                             task = desc,
                             deadline = deadlineText,
                             isStudent = true,
+                            onAtClick = {
+                                scope.launch {
+
+                                    try {
+                                        val res = studentViewModel.preResponseDownload(
+                                            PresignDownloadRequest(a.path)
+                                        )
+
+                                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                                            data =
+                                                Uri.parse(res.path)   // FULL https://...supabase.co/storage/v1/...
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        }
+                                        context.startActivity(intent)
+
+                                        Log.e("URL", res.path)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context,"Some Error Occurred",Toast.LENGTH_SHORT).show()
+                                        Log.e("ERROR", e.message.toString())
+                                    }
+                                }
+
+                            },
                             checked = checked,
                             canSubmit = deadlineText!="Expired",
                             onSubmit = {
@@ -158,13 +190,37 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                             semSelected.value = opt
                         }
                     }
+
                     items(assignsT) { a ->
                         val match = Regex("""^\(([^)]*)\)(.*)$""").find(a.assignment)
                         val task = match?.groupValues[1]?:"Hello".trim().replaceFirstChar { it.uppercase() }
                         val desc = match?.groupValues[2]?:"Hello".trim()
+                        Log.e("URI",a.path?:"fwefe")
                         TaskAlert(
                             heading = task,
                             task = desc,
+                            onAtClick = {
+
+                                scope.launch {
+
+                                    try {
+                                        val res = teacherViewModel.preResponseDownload(
+                                            PresignDownloadRequest(a.path)
+                                        )
+
+                                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                                            data =
+                                                Uri.parse(res.path)   // FULL https://...supabase.co/storage/v1/...
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        }
+                                        context.startActivity(intent)
+
+                                        Log.e("URL", res.path)
+                                    } catch (e: Exception) {
+                                        Log.e("ERROR", e.message.toString())
+                                    }
+                                }
+                            },
                             deadline = chatViewModel.formatDate(a.deadline),
                             isStudent = false,
                             isTeacher = true,

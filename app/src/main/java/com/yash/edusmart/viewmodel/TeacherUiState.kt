@@ -1,5 +1,6 @@
 package com.yash.edusmart.viewmodel
 
+import com.yash.edusmart.api.PresignUploadResponse
 import com.yash.edusmart.api.StudentData
 import com.yash.edusmart.data.AssignmentGetDTO
 import com.yash.edusmart.data.TimeTableEntry
@@ -15,4 +16,5 @@ data class TeacherUiState(
     val studentDataChat:List<StudentData> = emptyList(),
     val studentDataAttendance:List<StudentData> = emptyList(),
     val timeTableTeacher:List<TimeTableEntry> = emptyList(),
+    val fileResponse: PresignUploadResponse = PresignUploadResponse("","")
 )

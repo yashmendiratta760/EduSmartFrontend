@@ -1,9 +1,8 @@
 package com.yash.edusmart
 
 import android.app.Application
-import android.os.StrictMode
 import com.yash.edusmart.repository.ContextRepo
-import com.yash.edusmart.repository.TokenHolder
+import com.yash.edusmart.helper.TokenHolder
 import dagger.hilt.android.HiltAndroidApp
 import jakarta.inject.Inject
 import kotlinx.coroutines.CoroutineScope

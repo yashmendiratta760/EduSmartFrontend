@@ -3,6 +3,10 @@ package com.yash.edusmart.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yash.edusmart.api.PresignDownloadRequest
+import com.yash.edusmart.api.PresignDownloadResponse
+import com.yash.edusmart.api.PresignUploadRequest
+import com.yash.edusmart.api.PresignUploadResponse
 import com.yash.edusmart.api.StudentsListDTO
 import com.yash.edusmart.data.AssignmentGetDTO
 import com.yash.edusmart.data.AttendanceStatus
@@ -268,7 +272,8 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
                         enrollCom = newData.enroll,
                         task = newData.assignment,
                         deadline = newData.deadline,
-                        isCompleted = false
+                        isCompleted = false,
+                        path = newData.path
                     )
                 )
             } else {
@@ -291,6 +296,37 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
             showToast(e.message ?: "Something Went Wrong!")
         }
     }
+
+    suspend fun presignUploadSuspend(request: PresignUploadRequest): PresignUploadResponse {
+        Log.d("HIT","JIT")
+        val res = teacherApiRepo.preSignUpload(request)
+        Log.d("PRESIGN", "code=${res.code()} ok=${res.isSuccessful} body=${res.body()} err=${res.errorBody()?.string()}")
+
+
+        if (!res.isSuccessful) {
+            val err = res.errorBody()?.string()
+            throw RuntimeException("presignUpload failed: ${res.code()} ${res.message()} body=$err")
+        }
+
+        return res.body()
+            ?: throw RuntimeException("presignUpload success but body is null (converter/model mismatch?)")
+    }
+
+    suspend fun preResponseDownload(response: PresignDownloadRequest): PresignDownloadResponse{
+
+        val res = teacherApiRepo.preSignDownload(response)
+        if (!res.isSuccessful) {
+            val err = res.errorBody()?.string()
+            throw RuntimeException("presignUpload failed: ${res.code()} ${res.message()} body=$err")
+        }
+
+        return res.body()
+            ?: throw RuntimeException("presignUpload success but body is null (converter/model mismatch?)")
+    }
+
+
+
+
 
     fun insertOrUpdateEntry(
         day: String,

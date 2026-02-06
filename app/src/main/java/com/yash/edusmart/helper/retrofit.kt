@@ -1,4 +1,4 @@
-package com.yash.edusmart.repository
+package com.yash.edusmart.helper
 
 import android.content.Context
 import com.yash.edusmart.api.StudentApi
@@ -44,7 +44,7 @@ fun getUrl(): String {
     return if (isEmulator()) {
         "http://10.0.2.2:8080/"
     } else {
-        "http://192.168.0.102:8080/"
+        "http://192.168.0.103:8080/"
 
     }
 }
