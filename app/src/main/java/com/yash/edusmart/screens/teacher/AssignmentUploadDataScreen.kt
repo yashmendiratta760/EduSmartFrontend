@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -70,7 +71,7 @@ fun AssignmentUploadDataScreen(
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
-
+    var head by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     val branches by remember(teacherUiState.branch){
@@ -117,90 +118,100 @@ fun AssignmentUploadDataScreen(
             )
         }
     ){ innerPadding->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
 
-            Text(
-                text = "Create Assignment",
-                style = MaterialTheme.typography.headlineSmall
-            )
+            item {
+
+                Text(
+                    text = "Create Assignment",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+
+                OutlinedTextField(
+                    value = head,
+                    onValueChange = { head = it },
+                    label = { Text("Heading") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Task Description") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+
+                CustomDropdownMenu(
+                    options = branches,
+                    selectedOption = batch.value
+                ) { b ->
+                    batch.value = b
+                }
+
+                CustomDropdownMenu(
+                    options = listOf("1", "2", "3", "4", "5", "6", "7", "8"),
+                    selectedOption = sem.value
+                ) { s ->
+                    sem.value = s
+                }
 
 
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("Task Description") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3
-            )
 
-            CustomDropdownMenu(
-                options = branches,
-                selectedOption = batch.value
-            ) { b ->
-                batch.value = b
-            }
+                OutlinedTextField(
+                    value = selectedDate?.toString() ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            datePickerDialog.show()
+                        }) {
+                            Icon(
+                                Icons.Default.CalendarMonth,
+                                contentDescription = "Calendar",
+                            )
+                        }
+                    },
+                    label = { Text("Deadline Date") },
+                    modifier = Modifier
+                        .fillMaxWidth()
 
-            CustomDropdownMenu(
-                options = listOf("1","2","3","4","5","6","7","8"),
-                selectedOption = sem.value
-            ) { s ->
-                sem.value = s
-            }
+                )
 
+                Spacer(modifier = Modifier.height(16.dp))
 
+                Button(
+                    onClick = {
+                        selectedDate?.let { date ->
+                            val deadlineMillis = date
+                                .atStartOfDay(ZoneId.systemDefault())
+                                .toInstant()
+                                .toEpochMilli()
+                            val task = "($head)$description"
+                            chatViewModel.sendAssignment(
+                                message = AssignmentDTO(
+                                    sender = userUiState.email,
+                                    receiver = batch.value + " " + sem.value,
+                                    task = task,
+                                    deadline = deadlineMillis
+                                ),
+                                groupId = batch.value + " " + sem.value
+                            )
+                        }
 
-            OutlinedTextField(
-                value = selectedDate?.toString() ?: "",
-                onValueChange = {},
-                readOnly = true,
-                trailingIcon = {
-                    IconButton(onClick = {
-                        datePickerDialog.show()
-                    }) {
-                        Icon(
-                            Icons.Default.CalendarMonth,
-                            contentDescription = "Calendar",
-                        )
-                    }
-                },
-                label = { Text("Deadline Date") },
-                modifier = Modifier
-                    .fillMaxWidth()
-
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    selectedDate?.let { date ->
-                        val deadlineMillis = date
-                            .atStartOfDay(ZoneId.systemDefault())
-                            .toInstant()
-                            .toEpochMilli()
-
-                        chatViewModel.sendAssignment(
-                            message = AssignmentDTO(
-                                sender = userUiState.email,
-                                receiver = batch.value + " " +sem.value,
-                                task = description,
-                                deadline = deadlineMillis
-                            ),
-                            groupId = batch.value + " " +sem.value
-                        )
-                    }
-
-                    navController.popBackStack()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = description.isNotBlank() && selectedDate != null
-            ) {
-                Text("Submit Assignment")
+                        navController.popBackStack()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = description.isNotBlank() && selectedDate != null
+                ) {
+                    Text("Submit Assignment")
+                }
             }
         }
     }

@@ -40,11 +40,12 @@ fun TaskAlert(
     isStudent: Boolean,
     isTeacher: Boolean = false,
     task: String,
-    deadline: String,
+    deadline: String="",
     checked: Boolean = false,
     completedByNames: List<String> = emptyList(),
     onCheckedChange: (Boolean) -> Unit = {},
     onSubmit: () -> Unit = {},
+    canSubmit: Boolean=false,
     onDeleteClick: () -> Unit = {}
 ) {
 
@@ -110,19 +111,21 @@ fun TaskAlert(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = checked,
-                            onCheckedChange = { onCheckedChange(it) }
-                        )
-                        Text("Completed", color = Color.White)
-                    }
+                    if(canSubmit) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = checked,
+                                onCheckedChange = { onCheckedChange(it) }
+                            )
+                            Text("Completed", color = Color.White)
+                        }
 
-                    Button(
-                        onClick = onSubmit,
-                        enabled = checked
-                    ) {
-                        Text("Submit")
+                        Button(
+                            onClick = onSubmit,
+                            enabled = checked
+                        ) {
+                            Text("Submit")
+                        }
                     }
                 }
             }

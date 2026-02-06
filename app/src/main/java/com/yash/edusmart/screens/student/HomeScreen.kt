@@ -233,7 +233,7 @@ fun HomeScreen(innerPadding: PaddingValues,
                     TaskAlert(
                         heading = "Assignments",
                         task = topThreeTasks.joinToString("\n"),
-                        deadline = "",
+                        isTeacher = false,
                         isStudent = false
                     )
                 }

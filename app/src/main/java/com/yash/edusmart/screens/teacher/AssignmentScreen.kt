@@ -94,14 +94,10 @@ fun AssignmentScreen(innerPadding: PaddingValues,
 
     val today = LocalDate.now()
 
-    val filteredStudentAssignments by remember(assigns) {
-        derivedStateOf {
-            assigns.filter { a ->
-                val deadlineDate = a.deadline.toLocalDate()
-                !deadlineDate.isBefore(today)   // ✅ today OR future
-            }
-        }
+    val studentAssignments by remember(assigns) {
+        derivedStateOf { assigns }   // show all
     }
+
 
     val pullState = rememberPullToRefreshState()
     PullToRefreshBox(
@@ -123,14 +119,21 @@ fun AssignmentScreen(innerPadding: PaddingValues,
 
             LazyColumn {
                 if (isStudent) {
-                    items(filteredStudentAssignments) { a ->
+                    items(studentAssignments) { a ->
                         var checked by remember { mutableStateOf(a.isCompleted) }
+                        val match = Regex("""^\(([^)]*)\)(.*)$""").find(a.task)
+                        val task = match?.groupValues[1]?:"Hello".trim().replaceFirstChar { it.uppercase() }
+                        val desc = match?.groupValues[2]?:"Hello".trim()
+                        val deadlineDate = a.deadline.toLocalDate()
+                        val deadlineText = if (deadlineDate.isBefore(today)) "Expired"
+                        else chatViewModel.formatDate(a.deadline)
                         TaskAlert(
-                            heading = "Assignment",
-                            task = a.task,
-                            deadline = chatViewModel.formatDate(a.deadline),
+                            heading = task,
+                            task = desc,
+                            deadline = deadlineText,
                             isStudent = true,
                             checked = checked,
+                            canSubmit = deadlineText!="Expired",
                             onSubmit = {
                                 studentViewModel.markAssignment(a.id, userUiState.enroll)
                             },
@@ -156,9 +159,12 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                         }
                     }
                     items(assignsT) { a ->
+                        val match = Regex("""^\(([^)]*)\)(.*)$""").find(a.assignment)
+                        val task = match?.groupValues[1]?:"Hello".trim().replaceFirstChar { it.uppercase() }
+                        val desc = match?.groupValues[2]?:"Hello".trim()
                         TaskAlert(
-                            heading = "Assignment",
-                            task = a.assignment,
+                            heading = task,
+                            task = desc,
                             deadline = chatViewModel.formatDate(a.deadline),
                             isStudent = false,
                             isTeacher = true,
