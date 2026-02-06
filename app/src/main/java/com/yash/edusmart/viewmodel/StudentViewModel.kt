@@ -194,13 +194,14 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
         }
     }
     suspend fun preResponseDownload(response: PresignDownloadRequest): PresignDownloadResponse{
-
+        setLoadingTrue()
         val res = studentApiRepo.preSignDownload(response)
         if (!res.isSuccessful) {
+            setLoadingFalse()
             val err = res.errorBody()?.string()
             throw RuntimeException("presignUpload failed: ${res.code()} ${res.message()} body=$err")
         }
-
+        setLoadingFalse()
         return res.body()
             ?: throw RuntimeException("presignUpload success but body is null (converter/model mismatch?)")
     }
