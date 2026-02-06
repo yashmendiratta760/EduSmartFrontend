@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
@@ -71,7 +72,7 @@ fun TaskAlert(
                 onClick = onDeleteClick,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding( 20.dp)
+                    .padding(20.dp)
             ) {
                 Icon(Icons.Default.Delete, contentDescription = "DELETE", tint = Color.White)
             }
@@ -108,11 +109,19 @@ fun TaskAlert(
                     .padding(top = 10.dp)
             )
 
-            Text(text = "Attancement", modifier = Modifier.clickable(
-                onClick = {
-                    onAtClick()
-                }
-            ))
+            Row(
+                modifier = Modifier
+                    .padding(1.dp)
+                    .clickable(
+                    onClick = {
+                        onAtClick()
+                    })
+            ) {
+                Icon(Icons.Default.Attachment, contentDescription = "")
+                Text(
+                    text = "Attancement"
+                )
+            }
 
             if (isStudent) {
                 Row(
