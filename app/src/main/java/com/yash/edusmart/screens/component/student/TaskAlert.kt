@@ -48,7 +48,8 @@ fun TaskAlert(
     onSubmit: () -> Unit = {},
     canSubmit: Boolean=false,
     onAtClick :()-> Unit={},
-    onDeleteClick: () -> Unit = {}
+    onDeleteClick: () -> Unit = {},
+    ifHomeScreen: Boolean = false
 ) {
 
     Box(
@@ -67,7 +68,7 @@ fun TaskAlert(
     ) {
 
         // ✅ Delete icon pinned to top-right corner
-        if (!isStudent) {
+        if (!isStudent && !ifHomeScreen) {
             IconButton(
                 onClick = onDeleteClick,
                 modifier = Modifier
@@ -108,19 +109,21 @@ fun TaskAlert(
                 modifier = Modifier
                     .padding(top = 10.dp)
             )
+            if(!ifHomeScreen) {
 
-            Row(
-                modifier = Modifier
-                    .padding(1.dp)
-                    .clickable(
-                    onClick = {
-                        onAtClick()
-                    })
-            ) {
-                Icon(Icons.Default.Attachment, contentDescription = "")
-                Text(
-                    text = "Attancement"
-                )
+                Row(
+                    modifier = Modifier
+                        .padding(1.dp)
+                        .clickable(
+                            onClick = {
+                                onAtClick()
+                            })
+                ) {
+                    Icon(Icons.Default.Attachment, contentDescription = "")
+                    Text(
+                        text = "Attancement"
+                    )
+                }
             }
 
             if (isStudent) {

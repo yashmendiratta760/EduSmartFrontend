@@ -234,7 +234,8 @@ fun HomeScreen(innerPadding: PaddingValues,
                         heading = "Assignments",
                         task = topThreeTasks.joinToString("\n"),
                         isTeacher = false,
-                        isStudent = false
+                        isStudent = false,
+                        ifHomeScreen = true
                     )
                 }
             }
