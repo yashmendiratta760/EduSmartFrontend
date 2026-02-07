@@ -76,7 +76,7 @@ fun laxy()
 {
     LazyVerticalGrid(columns = GridCells.Fixed(2)) {
         items(6){
-            ItemCard(image = R.drawable.resource_management_2,
+            ItemCard(image = R.drawable.logo__1_,
                 "HelloWorld","Rent")
         }
     }

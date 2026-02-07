@@ -14,19 +14,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlin.math.sin
 import kotlin.math.truncate
 
 @Composable
 fun CustomTextField(modifier: Modifier = Modifier
-                    ,value:String,
+                    , value:String,
+                    visualTransformation: VisualTransformation= VisualTransformation.None,
                     onValueChange:(String)->Unit,
                     label:String,
                     leadingIcon:@Composable (()->Unit)?=null,
                     keyboardOptions:KeyboardOptions,
                     focusedContainerColor:Color,
-                    unfocusedContainerColor:Color
+                    unfocusedContainerColor:Color,
+                    trailingIcon:@Composable (()->Unit)?=null
                     )
 {
     TextField(value = value,
@@ -38,6 +41,8 @@ fun CustomTextField(modifier: Modifier = Modifier
         shape = RoundedCornerShape(30.dp),
         singleLine = true,
         keyboardOptions = keyboardOptions,
+        trailingIcon = trailingIcon,
+        visualTransformation = visualTransformation,
         modifier = modifier.padding(start = 10.dp,end = 10.dp),
         colors = TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Transparent,

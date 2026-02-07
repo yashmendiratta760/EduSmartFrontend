@@ -15,10 +15,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Password
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -32,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -124,6 +128,8 @@ fun Login(loginSignupViewModel: LoginSignupViewModel,
 
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
     Box(Modifier.fillMaxSize()) {
         LoginSignupBackground(isDarkTheme)
         Column(
@@ -134,10 +140,12 @@ fun Login(loginSignupViewModel: LoginSignupViewModel,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(verticalArrangement = Arrangement.Center) {
-                Image(painter = painterResource(R.drawable.resource_management_2),
+                Image(painter = painterResource(R.drawable.logo__1_),
                     contentDescription = null,
-                    modifier = Modifier.size(350.dp))
+                    modifier = Modifier.size(250.dp)
+                        .clip(shape = CircleShape))
             }
+            Spacer(modifier = Modifier.padding(30.dp))
             CustomTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -169,10 +177,26 @@ fun Login(loginSignupViewModel: LoginSignupViewModel,
                         contentDescription = "Password"
                     )
                 },
+                trailingIcon = {
+                    Icon(
+                        imageVector = if (passwordVisible)
+                            Icons.Default.Visibility
+                        else
+                            Icons.Default.VisibilityOff,
+                        contentDescription = "Toggle password visibility",
+                        modifier = Modifier.clickable {
+                            passwordVisible = !passwordVisible
+                        }
+                    )
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
                 ),
+                visualTransformation = if (passwordVisible)
+                    androidx.compose.ui.text.input.VisualTransformation.None
+                else
+                    androidx.compose.ui.text.input.PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
                 focusedContainerColor = if(!isDarkTheme) Color(0xFF292C31)
                 else Color(0xFF515152),
