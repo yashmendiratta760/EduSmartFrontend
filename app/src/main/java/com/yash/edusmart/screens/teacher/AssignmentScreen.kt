@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,6 +68,11 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                      teacherViewModel: TeacherViewModel,
                      userUiState: UserUiState,
                      navController: NavHostController){
+
+
+
+
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val branches by remember(teacherUiState.branch) {
@@ -75,8 +81,8 @@ fun AssignmentScreen(innerPadding: PaddingValues,
         }
     }
     val semester = listOf("1","2","3","4","5","6","7","8")
-    val branchSelected = remember { mutableStateOf("Select Branch") }
-    val semSelected = remember { mutableStateOf("Select Semester") }
+    val branchSelected = rememberSaveable { mutableStateOf("Select Branch") }
+    val semSelected = rememberSaveable { mutableStateOf("Select Semester") }
 
     LaunchedEffect(branchSelected.value,semSelected.value){
         if(branchSelected.value!="Select Branch" && semSelected.value!="Select Semester"){
@@ -84,27 +90,29 @@ fun AssignmentScreen(innerPadding: PaddingValues,
         }
     }
 
-    var assigns by remember {
-        mutableStateOf<List<Assignments>>(emptyList())
-    }
-    var assignsT by remember {
-        mutableStateOf<List<AssignmentGetDTO>>(emptyList())
-    }
-    if(isStudent) {
-        LaunchedEffect(chatUiState.assignments) {
-            assigns = chatUiState.assignments
-        }
-    }else{
-        LaunchedEffect(teacherUiState.assignments) {
-            assignsT = teacherUiState.assignments
-        }
-    }
+    val assigns = chatUiState.assignments
+    val assignsT = teacherUiState.assignments
 
     val today = LocalDate.now()
 
-    val studentAssignments by remember(assigns) {
-        derivedStateOf { assigns }   // show all
+    LaunchedEffect(Unit) {
+        if (isStudent && chatUiState.assignments.isEmpty()) {
+            studentViewModel.getAssignmentStudent(
+                userUiState.branch,
+                userUiState.semester
+            )
+        }
     }
+    LaunchedEffect(Unit) {
+        if (!isStudent && teacherUiState.assignments.isEmpty()) {
+            teacherViewModel.getAssignmentsTeacher(
+                branchSelected.value,
+                semSelected.value
+            )
+        }
+    }
+
+
 
 
     val pullState = rememberPullToRefreshState()
@@ -117,7 +125,9 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                     teacherViewModel.getAssignmentsTeacher(branchSelected.value,semSelected.value)
             }
         },
-        modifier = Modifier.padding(innerPadding),
+        modifier = Modifier
+            .padding(innerPadding)
+            .fillMaxSize(),
         isRefreshing = if(isStudent) studentUiState.isLoading else teacherUiState.isLoading
     ) {
         Box(
@@ -127,8 +137,11 @@ fun AssignmentScreen(innerPadding: PaddingValues,
 
             LazyColumn {
                 if (isStudent) {
-                    items(studentAssignments) { a ->
-                        var checked by remember { mutableStateOf(a.isCompleted) }
+                    items(items = assigns,
+                        key = { it.id }) { a ->
+                        var checked by remember(a.id, a.isCompleted) {
+                            mutableStateOf(a.isCompleted)
+                        }
                         val match = Regex("""^\(([^)]*)\)(.*)$""").find(a.task)
                         val task = match?.groupValues[1]?:"Hello".trim().replaceFirstChar { it.uppercase() }
                         val desc = match?.groupValues[2]?:"Hello".trim()
@@ -191,7 +204,8 @@ fun AssignmentScreen(innerPadding: PaddingValues,
                         }
                     }
 
-                    items(assignsT) { a ->
+                    items(items = assignsT,
+                        key = { it.id } ) { a ->
                         val match = Regex("""^\(([^)]*)\)(.*)$""").find(a.assignment)
                         val task = match?.groupValues[1]?:"Hello".trim().replaceFirstChar { it.uppercase() }
                         val desc = match?.groupValues[2]?:"Hello".trim()

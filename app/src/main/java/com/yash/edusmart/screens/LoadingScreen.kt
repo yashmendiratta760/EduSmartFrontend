@@ -31,7 +31,6 @@ fun LoadingScreen(navController: NavHostController,
     LaunchedEffect(Unit) {
         val token = TokenManager.getToken(context).first()          // might be null
         val userType = TokenManager.getUserType(context).first()
-        val email = TokenManager.getEmail(context).first()
         if (token.isNullOrBlank()) {
             navController.navigate(Screens.Login.name) {
                 popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -51,7 +50,7 @@ fun LoadingScreen(navController: NavHostController,
 
             "TEACHER" -> {
                 teacherViewModel.getAllBranch()
-                if(email!=null)  teacherViewModel.getTimeTableTeacher(email)
+                teacherViewModel.getTimeTableTeacher()
                 navController.navigate(Screens.Teacher.name) {
                     popUpTo(0) { inclusive = true }
                 }

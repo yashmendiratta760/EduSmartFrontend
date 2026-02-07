@@ -172,6 +172,7 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
     fun getTimeTableEntries(branch: String, semester: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                setLoadingTrue()
                 val response = localDbRepo.getDataByBranchAndSemester(branch, semester)
                 val entries = response.map { dto ->
                     TimeTableDTO(
@@ -180,8 +181,10 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
                         day = dto.day
                     )
                 }
+                setLoadingFalse()
                 _uiState.update { it.copy(timeTableEntries = entries) }
             } catch (e: Exception) {
+                setLoadingFalse()
                 showToast(e.message ?: "Something Went Wrong!")
             }
         }
@@ -189,8 +192,10 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
     fun getTimeTableByBranchAndSemesterTeacher(branch: String, semester: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             safeApi(
-                call = { teacherApiRepo .getTimeTableByBranchAndSemesterTeacher(branch, semester.toString()) },
+                call = { setLoadingTrue()
+                    teacherApiRepo .getTimeTableByBranchAndSemesterTeacher(branch, semester.toString()) },
                 onSuccess = { list ->
+                    setLoadingFalse()
                     (list ?: emptyList()).forEach { it ->
                         insertOrUpdateEntry(
                             day = it.day,
@@ -201,6 +206,9 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
                         )
                     }
                     _uiState.update { it.copy(callComplete = true) }
+                },
+                onError = {
+                    setLoadingFalse()
                 }
             )
         }
@@ -221,16 +229,20 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
         }
     }
 
-    fun getTimeTableTeacher(email: String){
+    fun getTimeTableTeacher(){
         viewModelScope.launch(Dispatchers.IO){
-            safeApi(call = {teacherApiRepo.getTeacherTimeTable(email)},
+            safeApi(call = {
+                setLoadingTrue()
+                teacherApiRepo.getTeacherTimeTable()},
                 onSuccess = {time->
+                    setLoadingFalse()
                     _uiState.update { it->
                         it.copy(timeTableTeacher = time?:emptyList())
                     }
                     Log.d("TIM",time.toString())
                 },
                 onError = { err ->
+                    setLoadingFalse()
                     showToast(err)
                 }
             )

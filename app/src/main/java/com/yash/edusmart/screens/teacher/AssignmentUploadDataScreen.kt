@@ -84,6 +84,11 @@ fun AssignmentUploadDataScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        if(teacherUiState.branch.isEmpty())
+            teacherViewModel.getAllBranch()
+    }
+
     LaunchedEffect(chatViewModel) {
         chatViewModel.toastEvent.collect {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
@@ -127,7 +132,7 @@ fun AssignmentUploadDataScreen(
                 scrollBehavior = scrollBehavior,
                 title = {
                     Text(text = "Upload Assignment",
-                        fontSize = 35.sp)
+                        fontSize = 25.sp)
                 },
                 navigationIcon = {
 

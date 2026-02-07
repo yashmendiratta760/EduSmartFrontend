@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -67,8 +68,7 @@ fun MainLogic(navController: NavHostController,
               userUiState: UserUiState,
               chatUiState: ChatUiState,
               teacherViewModel: TeacherViewModel,
-              teacherUiState: TeacherUiState,
-              loginUiState: LoginUiState)
+              teacherUiState: TeacherUiState)
 {
     val context  = LocalContext.current
     LaunchedEffect(userUiState.branch,userUiState.semester){
@@ -108,13 +108,13 @@ fun MainLogic(navController: NavHostController,
         studentViewModel.setFalseCallComplete()
 
     }
-    val selectedDay = remember { mutableStateOf(LocalDate.now().dayOfWeek.toString().lowercase().replaceFirstChar { it.uppercase()  }) }
+    val selectedDay = rememberSaveable { mutableStateOf(LocalDate.now().dayOfWeek.toString().lowercase().replaceFirstChar { it.uppercase()  }) }
 
 //    LaunchedEffect(selectedDay.value){
 //        studentViewModel.setDay(selectedDay.value)
 //    }
 
-    var selectedIndex by remember { mutableIntStateOf(0) }
+    var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
 //    LaunchedEffect(selectedIndex){
 //        studentViewModel.setScreen(selectedIndex)

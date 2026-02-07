@@ -62,7 +62,6 @@ fun Navigation(navController: NavHostController = rememberNavController(),
                 studentViewModel = studentViewModel,
                 chatViewModel = chatViewModel,
                 userUiState = userUiState,
-                loginUiState = loginUiState,
                 chatUiState = chatUiState)
         }
 
@@ -74,7 +73,6 @@ fun Navigation(navController: NavHostController = rememberNavController(),
                 studentViewModel = studentViewModel,
                 chatViewModel = chatViewModel,
                 userUiState=userUiState,
-                loginUiState = loginUiState,
                 studentUiState = studentUiState,
                 chatUiState = chatUiState)
         }

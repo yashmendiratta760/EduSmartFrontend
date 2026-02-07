@@ -32,7 +32,7 @@ interface TeacherApiRepo {
 
     suspend fun getAllAssignTeacher(branch: String,sem: String): Response<List<AssignmentGetDTO>>
 
-    suspend fun getTeacherTimeTable(email : String): Response<List<TimeTableEntry>>
+    suspend fun getTeacherTimeTable(): Response<List<TimeTableEntry>>
 
     suspend fun deleteAssignment(id: Long): Response<String>
 
@@ -76,8 +76,8 @@ class TeacherApiRepoImpl @Inject constructor(private val teacherApi: TeacherApi)
         return teacherApi.getAllAssignTeacher(branch,sem)
     }
 
-    override suspend fun getTeacherTimeTable(email: String): Response<List<TimeTableEntry>> {
-        return teacherApi.getTeacherTimeTable(email)
+    override suspend fun getTeacherTimeTable(): Response<List<TimeTableEntry>> {
+        return teacherApi.getTeacherTimeTable()
     }
 
     override suspend fun deleteAssignment(id: Long): Response<String> {

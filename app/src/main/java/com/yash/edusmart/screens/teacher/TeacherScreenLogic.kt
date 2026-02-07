@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
@@ -60,19 +61,18 @@ fun TeacherMainLogic(navController: NavHostController,
                      userUiState: UserUiState,
                      chatUiState: ChatUiState,
                      studentUiState: StudentUiState,
-                     studentViewModel: StudentViewModel,
-                     loginUiState: LoginUiState){
+                     studentViewModel: StudentViewModel){
     val context = LocalContext.current
     val bottomBarItems = listOf(
         Triple("Attendance", Icons.Outlined.Timelapse, Icons.Default.Timelapse),
         Triple("TimeTable", Icons.Outlined.CalendarMonth, Icons.Default.CalendarMonth),
-        Triple("Assignments", Icons.AutoMirrored.Outlined.Assignment,
+        Triple("Tasks", Icons.AutoMirrored.Outlined.Assignment,
             Icons.AutoMirrored.Filled.Assignment
         ),
         Triple("Chat", Icons.Outlined.Group, Icons.Default.Group),
         Triple("Settings", Icons.Outlined.Settings, Icons.Default.Settings)
     )
-    var selectedIndex by remember { mutableIntStateOf(0) }
+    var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
     LaunchedEffect(chatViewModel) {
         chatViewModel.toastEvent.collect {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
@@ -90,14 +90,14 @@ fun TeacherMainLogic(navController: NavHostController,
     val scrollBehaviorChat = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scrollBehaviorSettings = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scrollBehaviorTasks = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val selectedBatch = remember { mutableStateOf("Select Branch") }
-    val selectedSemester = remember { mutableStateOf("Select Semester") }
-    val selectedChatType = remember { mutableStateOf("Select Chat Type") }
+    val selectedBatch = rememberSaveable { mutableStateOf("Select Branch") }
+    val selectedSemester = rememberSaveable { mutableStateOf("Select Semester") }
+    val selectedChatType = rememberSaveable { mutableStateOf("Select Chat Type") }
     var canNavigateBackChat by remember { mutableStateOf(false) }
     var chatBackPressed by remember { mutableStateOf(false) }
 
 
-    val selectedDay = remember { mutableStateOf(LocalDate.now().dayOfWeek.toString().lowercase().replaceFirstChar { it.uppercase() }) }
+    val selectedDay = rememberSaveable { mutableStateOf(LocalDate.now().dayOfWeek.toString().lowercase().replaceFirstChar { it.uppercase() }) }
 
     LaunchedEffect(selectedBatch.value, selectedSemester.value){
 
@@ -188,7 +188,9 @@ fun TeacherMainLogic(navController: NavHostController,
             1->TimeTableTeacher(
                 innerPadding = innerPadding,
                 selectedDay = selectedDay,
-                teacherUiState = teacherUiState
+                teacherUiState = teacherUiState,
+                teacherViewModel = teacherViewModel,
+                userUiState = userUiState
             )
             2-> AssignmentScreen(innerPadding = innerPadding,
                 chatViewModel=chatViewModel,

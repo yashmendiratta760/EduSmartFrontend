@@ -5,6 +5,7 @@ import com.yash.edusmart.data.AttendanceUploadDTO
 import com.yash.edusmart.data.TimeTableEntry
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -40,10 +41,9 @@ interface TeacherApi{
 
     @GET("/teacher/getMyTImeTable")
     suspend fun getTeacherTimeTable(
-        @Query("email") email : String
     ): Response<List<TimeTableEntry>>
 
-    @PUT("/teacher/deleteAssignment")
+    @DELETE("/teacher/deleteAssignment")
     suspend fun deleteAssignment(
         @Query("id") id: Long
     ): Response<String>
