@@ -10,5 +10,6 @@ data class TimeTableEntries(
     val subject: String,
     val timing:String,
     val branch: String,
-    val semester : Int
+    val semester : Int,
+    val room: String
 )

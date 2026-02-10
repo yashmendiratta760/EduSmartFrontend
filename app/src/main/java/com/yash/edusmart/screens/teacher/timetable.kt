@@ -171,7 +171,7 @@ fun TimeTableTeacher(innerPadding: PaddingValues,
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
-                                                text = entry.subject,
+                                                text = entry.subject+"(#${entry.room})",
                                                 modifier = Modifier.padding(6.dp),
                                                 maxLines = 3,          // up to 3 lines
                                                 softWrap = true,       // allow wrapping

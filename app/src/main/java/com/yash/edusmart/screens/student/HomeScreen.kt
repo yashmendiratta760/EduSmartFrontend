@@ -201,7 +201,7 @@ fun HomeScreen(innerPadding: PaddingValues,
                                                 ), contentAlignment = Alignment.Center
                                         ) {
                                             Text(
-                                                text = entry.subject,
+                                                text = entry.subject+"(#${entry.room})",
                                                 modifier = Modifier.padding(6.dp),
                                                 fontSize = if (entry.subject.length > 21) 12.sp else 15.sp
                                             )

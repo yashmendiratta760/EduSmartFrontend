@@ -234,7 +234,8 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
                             branch = it.branch,
                             subject = it.subject,
                             timing = it.time,
-                            semester = semester
+                            semester = semester,
+                            room = it.room
                         )
                     }
                     _uiState.update { it.copy(callComplete = true) }
@@ -249,7 +250,8 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
         branch: String,
         subject: String,
         timing: String,
-        semester: Int
+        semester: Int,
+        room: String
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -264,7 +266,8 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
                             branch = branch,
                             subject = subject,
                             timing = timing,
-                            semester = semester
+                            semester = semester,
+                            room = room
                         )
                         localDbRepo.update(updatedEntry)
                     }
@@ -274,7 +277,8 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
                         branch = branch,
                         subject = subject,
                         timing = timing,
-                        semester = semester
+                        semester = semester,
+                        room = room
                     )
                     localDbRepo.insert(newEntry)
                 }
@@ -284,6 +288,8 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
         }
     }
 
+
+
     fun getTimeTableEntries(branch: String, semester: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -292,7 +298,8 @@ class StudentViewModel @Inject constructor(private val contextRepo: ContextRepo,
                     TimeTableDTO(
                         timing = dto.timing,
                         subject = dto.subject,
-                        day = dto.day
+                        day = dto.day,
+                        room = dto.room
                     )
                 }
                 _uiState.update { it.copy(timeTableEntries = entries) }

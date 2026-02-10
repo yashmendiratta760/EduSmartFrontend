@@ -178,7 +178,8 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
                     TimeTableDTO(
                         timing = dto.timing,
                         subject = dto.subject,
-                        day = dto.day
+                        day = dto.day,
+                        room = dto.room
                     )
                 }
                 setLoadingFalse()
@@ -202,7 +203,8 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
                             branch = it.branch,
                             subject = it.subject,
                             timing = it.time,
-                            semester = semester
+                            semester = semester,
+                            room = it.room
                         )
                     }
                     _uiState.update { it.copy(callComplete = true) }
@@ -347,7 +349,8 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
         branch: String,
         subject: String,
         timing: String,
-        semester: Int
+        semester: Int,
+        room: String
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -362,7 +365,7 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
                             branch = branch,
                             subject = subject,
                             timing = timing,
-                            semester = semester
+                            semester = semester, room = room
                         )
                         localDbRepo.update(updatedEntry)
                     }
@@ -372,7 +375,8 @@ class TeacherViewModel @Inject constructor(private val teacherApiRepo: TeacherAp
                         branch = branch,
                         subject = subject,
                         timing = timing,
-                        semester = semester
+                        semester = semester,
+                        room = room
                     )
                     localDbRepo.insert(newEntry)
                 }

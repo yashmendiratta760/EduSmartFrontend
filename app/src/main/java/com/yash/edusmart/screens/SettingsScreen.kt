@@ -70,15 +70,15 @@ fun SettingsScreen(innerPadding: PaddingValues,
 
 
     val accountData:List<Penta<String, String, ImageVector, Color, () -> Unit>>  = listOf(
-        Penta("Edit Profile","Update your personal information", Icons.Default.Person,Color.Blue) {},
-        Penta("Change Password","Update your password", Icons.Default.Lock,Color.Cyan) {},
-        Penta("Email Settings","Manage email preferences", Icons.Default.Email,Color.Green) {}
+//        Penta("Edit Profile","Update your personal information", Icons.Default.Person,Color.Blue) {},
+//        Penta("Change Password","Update your password", Icons.Default.Lock,Color.Cyan) {},
+//        Penta("Email Settings","Manage email preferences", Icons.Default.Email,Color.Green) {}
     )
     val notificationsData :List<Penta<String, String, ImageVector, Color, () -> Unit>> = listOf(
-        Penta("Push Notifications","Enable push notifications",Icons.Default.Notifications,Color(0xFFE36D24)) {},
-        Penta("Email Notifications","Receive updates via email", Icons.Default.Email,Color(0xFFB514F0)) {},
-        Penta("Class Reminders","Get class reminders one day before",Icons.Default.CalendarToday,Color.Blue) {},
-        Penta("Attendance Alerts","Low attendance notifications", Icons.Default.NotificationsActive,Color.Red) {}
+//        Penta("Push Notifications","Enable push notifications",Icons.Default.Notifications,Color(0xFFE36D24)) {},
+//        Penta("Email Notifications","Receive updates via email", Icons.Default.Email,Color(0xFFB514F0)) {},
+//        Penta("Class Reminders","Get class reminders one day before",Icons.Default.CalendarToday,Color.Blue) {},
+//        Penta("Attendance Alerts","Low attendance notifications", Icons.Default.NotificationsActive,Color.Red) {}
     )
     val supportData:List<Penta<String, String, ImageVector, Color, () -> Unit>>  = listOf(
         Penta("Logout","", Icons.Outlined.Delete,Color.Red) {
@@ -93,7 +93,7 @@ fun SettingsScreen(innerPadding: PaddingValues,
                 }
             }
         },
-        Penta("Help & Support","Get help and FAQ's", Icons.Default.QuestionMark,Color.Magenta) {},
+//        Penta("Help & Support","Get help and FAQ's", Icons.Default.QuestionMark,Color.Magenta) {},
         Penta("About EduSmart","Version 1.0.0",Icons.Default.BookmarkBorder,Color.Gray) {}
     )
 
@@ -127,27 +127,27 @@ fun SettingsScreen(innerPadding: PaddingValues,
                     Box {
 
                         Image(
-                            painter = painterResource(R.drawable.ic_launcher_background),
+                            painter = painterResource(R.drawable.img),
                             contentDescription = "PFP",
                             modifier = Modifier
                                 .size(85.dp)
                                 .clip(shape = RoundedCornerShape(80.dp))
                         )
-                        Box(Modifier.align(Alignment.BottomEnd)
-                            .size(35.dp)
-                            .clickable(
-                                onClick = {
-//                                    launcher.launch("image/*")
-                                }
-                            )
-                            .background(color = Color.Blue.copy(alpha = 0.6f),
-                                shape = RoundedCornerShape(30.dp)),
-                            contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Outlined.Edit,
-                                contentDescription = "Edit icon"
-                            )
-                        }
+//                        Box(Modifier.align(Alignment.BottomEnd)
+//                            .size(35.dp)
+//                            .clickable(
+//                                onClick = {
+////                                    launcher.launch("image/*")/
+//                                }
+//                            )
+//                            .background(color = Color.Blue.copy(alpha = 0.6f),
+//                                shape = RoundedCornerShape(30.dp)),
+//                            contentAlignment = Alignment.Center) {
+//                            Icon(
+//                                Icons.Outlined.Edit,
+//                                contentDescription = "Edit icon"
+//                            )
+//                        }
                     }
                     Column(
                         modifier = Modifier.padding(
@@ -184,19 +184,19 @@ fun SettingsScreen(innerPadding: PaddingValues,
         }
         item {
             Spacer(modifier = Modifier.height(30.dp))
-            Text(text = "Account", color = Color.LightGray,
-                fontSize = 15.sp,
-                modifier = Modifier.padding(start = 10.dp,
-                    top = 10.dp,
-                    bottom = 10.dp))
-            SettingsOptionBox(accountData)
-
-            Text(text = "Notifications", color = Color.LightGray,
-                fontSize = 15.sp,
-                modifier = Modifier.padding(start = 10.dp,
-                    top = 10.dp,
-                    bottom = 10.dp))
-            SettingsOptionBox(notificationsData)
+//            Text(text = "Account", color = Color.LightGray,
+//                fontSize = 15.sp,
+//                modifier = Modifier.padding(start = 10.dp,
+//                    top = 10.dp,
+//                    bottom = 10.dp))
+//            SettingsOptionBox(accountData)
+//
+//            Text(text = "Notifications", color = Color.LightGray,
+//                fontSize = 15.sp,
+//                modifier = Modifier.padding(start = 10.dp,
+//                    top = 10.dp,
+//                    bottom = 10.dp))
+//            SettingsOptionBox(notificationsData)
 
             Text(text = "Support", color = Color.LightGray,
                 fontSize = 15.sp,

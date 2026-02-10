@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -35,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.yash.edusmart.R
@@ -219,7 +221,7 @@ fun ChatScreen(innerPadding: PaddingValues,
 
             when {
                 // Private chat
-                (!isStudent && selectedChatType.value == "Private Chat" && selectedBatch.value != "Select Branch")
+                (!isStudent && selectedChatType.value == "Private Chat" && selectedBatch.value != "Select Branch" && selectedSemester.value!="Select Semester")
                         || (isStudent && selectedChatType.value == "Private Chat") -> {
 
                     if (studentSelected == 1) {
@@ -262,9 +264,10 @@ fun ChatScreen(innerPadding: PaddingValues,
                                             }
                                     ) {
                                         Image(
-                                            painter = painterResource(R.drawable.google_logo),
+                                            painter = painterResource(R.drawable.img),
                                             contentDescription = "",
                                             modifier = Modifier.size(70.dp)
+                                                .clip(shape = CircleShape)
                                         )
                                         Text(text = st.name)
                                     }
@@ -285,9 +288,9 @@ fun ChatScreen(innerPadding: PaddingValues,
                                                 }
                                         ) {
                                             Image(
-                                                painter = painterResource(R.drawable.google_logo),
+                                                painter = painterResource(R.drawable.img),
                                                 contentDescription = "",
-                                                modifier = Modifier.size(70.dp)
+                                                modifier = Modifier.size(70.dp).clip(shape = CircleShape)
                                             )
                                             Text(text = st.name)
                                         }
@@ -303,7 +306,8 @@ fun ChatScreen(innerPadding: PaddingValues,
                         && selectedBatch.value != "Select Branch"
                         && selectedSemester.value != "Select Semester")
                         || (isStudent && selectedChatType.value == "Group Chat(Official)") -> {
-
+                    chatViewModel.syncTeacherGroupHistory(branch = selectedBatch.value, sem = selectedSemester.value,
+                        email = userUiState.email)
                     LazyColumn(
                         modifier = Modifier.fillMaxWidth(),
                         state = listState,
@@ -335,7 +339,44 @@ fun ChatScreen(innerPadding: PaddingValues,
                 isDarkTheme = isDarkTheme,
                 onValueChange = { typeMsg = it },
                 onSendClick = {
-                    // keep your existing send logic
+                    if(selectedChatType.value=="Private Chat") {
+                        chatViewModel.sendPrivate(
+                            ChatMessage(
+                                sender = userUiState.email,
+                                receiver = receiver,
+                                message = typeMsg,
+                                messageType = MessageType.CHAT
+                            )
+                        )
+                        chatViewModel.addMessage(
+                            ChatEntries(
+                                message = typeMsg,
+                                sender = userUiState.email,
+                                receiver = receiver, isSent = true,
+                                timeStamp = System.currentTimeMillis()
+                            )
+                        )
+                    }else {
+
+                        chatViewModel.sendGroup(
+                            ChatMessage(
+                                sender = userUiState.email,
+                                receiver = selectedBatch.value + " " + selectedSemester.value,
+                                message = typeMsg,
+                                messageType = MessageType.CHAT
+                            )
+                        )
+                        chatViewModel.addMessage(
+                            ChatEntries(
+                                message = typeMsg,
+                                sender = userUiState.email,
+                                receiver = selectedBatch.value + " " + selectedSemester.value,
+                                isSent = true,
+                                timeStamp = System.currentTimeMillis()
+                            )
+                        )
+                    }
+                    typeMsg=""
                 }
             )
 
